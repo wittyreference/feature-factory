@@ -95,7 +95,7 @@ Skills are reference documents Claude loads on demand for specialized knowledge.
 ### Install into an existing project
 
 ```bash
-git clone https://github.com/your-org/feature-factory.git /tmp/feature-factory
+git clone https://github.com/wittyreference/feature-factory.git /tmp/feature-factory
 /tmp/feature-factory/scripts/init.sh ~/your-project
 ```
 
