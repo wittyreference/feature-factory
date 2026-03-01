@@ -1,0 +1,24 @@
+{
+  "name": "feature-factory",
+  "version": "0.1.0",
+  "description": "Self-documenting, self-healing, TDD-enforcing development toolkit for Claude Code",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mcarpenter/feature-factory"
+  },
+  "scripts": {
+    "test:hooks": ".claude/hooks/__tests__/test-all-hooks.sh",
+    "test:leakage": ".claude/hooks/__tests__/test-no-leakage.sh",
+    "test": "npm run test:hooks && npm run test:leakage",
+    "init": "bash scripts/init.sh"
+  },
+  "keywords": [
+    "claude-code",
+    "developer-tools",
+    "tdd",
+    "documentation",
+    "quality-gates",
+    "ai-assisted-development"
+  ]
+}

@@ -1,0 +1,86 @@
+#!/bin/bash
+# ABOUTME: Post-bash hook for tracking command completions.
+# ABOUTME: Logs deployment completions and sends notifications for key operations.
+
+# ============================================
+# PARSE TOOL INPUT FROM STDIN
+# ============================================
+# Claude Code passes tool input as JSON on stdin, not env vars.
+# Capture it before anything else consumes stdin.
+_POST_BASH_HOOK_INPUT=""
+if [ ! -t 0 ]; then
+    _POST_BASH_HOOK_INPUT="$(cat)"
+fi
+
+# ============================================
+# COMPACT-PENDING MARKER CHECK
+# ============================================
+# After auto-compaction, PreCompact leaves a marker file. Pick it up here
+# to run the compaction summary extraction (since SessionStart only fires
+# for manual /compact, not auto-compaction).
+_check_compact_pending() {
+    local HOOK_DIR="$(dirname "${BASH_SOURCE[0]}")"
+    source "$HOOK_DIR/_meta-mode.sh"
+    local MARKER
+    if [ "$CLAUDE_META_MODE" = "true" ]; then
+        MARKER="$PROJECT_ROOT/.meta/.compact-pending"
+    else
+        MARKER="$PROJECT_ROOT/.claude/.compact-pending"
+    fi
+    if [ -f "$MARKER" ]; then
+        "$HOOK_DIR/post-compact-summary.sh" < "$MARKER"
+        rm -f "$MARKER"
+    fi
+}
+_check_compact_pending
+
+COMMAND=""
+if [ -n "$_POST_BASH_HOOK_INPUT" ] && command -v jq &> /dev/null; then
+    COMMAND="$(echo "$_POST_BASH_HOOK_INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null)"
+fi
+
+# Exit if no command
+if [ -z "$COMMAND" ]; then
+    exit 0
+fi
+
+# Source config reader
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/_config-reader.sh" ]; then
+    source "$SCRIPT_DIR/_config-reader.sh"
+fi
+
+# ============================================
+# DEPLOYMENT COMPLETION (CONFIG-DRIVEN)
+# ============================================
+
+DEPLOY_CMD=$(ff_config ".deployment.command" "" 2>/dev/null)
+if [ -n "$DEPLOY_CMD" ] && echo "$COMMAND" | grep -qF "$DEPLOY_CMD"; then
+    echo ""
+    echo "Deployment command completed."
+    echo "Check the output above for deployed URLs."
+    echo ""
+
+    # Send desktop notification
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        osascript -e 'display notification "Deployment complete - check terminal for URLs" with title "Claude Code" sound name "Hero"' 2>/dev/null || true
+    elif command -v notify-send &> /dev/null; then
+        notify-send "Claude Code" "Deployment complete" 2>/dev/null || true
+    fi
+fi
+
+# ============================================
+# TEST/BUILD COMPLETION - Doc reminder
+# ============================================
+
+# After tests or builds complete is a great time to remind about docs
+# because significant work was just completed and verified
+if echo "$COMMAND" | grep -qE "(npm\s+(test|run\s+(test|build))|jest|vitest|pytest|cargo\s+test|go\s+test|make\s+test)"; then
+    # Call the consolidated flywheel-doc-check (environment-aware)
+    FLYWHEEL_HOOK="$SCRIPT_DIR/flywheel-doc-check.sh"
+    if [ -x "$FLYWHEEL_HOOK" ]; then
+        "$FLYWHEEL_HOOK" --force
+    fi
+fi
+
+exit 0

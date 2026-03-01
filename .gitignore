@@ -1,0 +1,35 @@
+# Meta-development (never ships)
+.meta/
+
+# Blog drafts (not part of the shipped product)
+blog/
+
+# Platform overlays (validation artifacts, not shipped with generic FF)
+twilio-overlay/
+
+# Environment
+.env
+.env.local
+
+# Dependencies
+node_modules/
+
+# Coverage
+coverage/
+
+# Session state (transient)
+.claude/logs/
+.claude/.session-*
+.claude/.last-doc-check
+.claude/.compact-pending
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/

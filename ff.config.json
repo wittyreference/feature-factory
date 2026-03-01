@@ -1,0 +1,63 @@
+{
+  "project": {
+    "name": "my-project",
+    "language": "javascript",
+    "sourceDirectories": ["src/", "lib/"]
+  },
+  "testing": {
+    "command": "npm test",
+    "coverageCommand": "npm run test:coverage",
+    "coverageThreshold": 80,
+    "testFilePatterns": ["**/*.test.*", "**/*.spec.*", "__tests__/**"]
+  },
+  "linting": {
+    "command": "npm run lint",
+    "fixCommand": "npm run lint:fix"
+  },
+  "deployment": {
+    "command": null,
+    "preChecks": ["test", "lint", "coverage"]
+  },
+  "credentialPatterns": [
+    {
+      "pattern": "(?:password|passwd|pwd)\\s*[:=]\\s*[\"'][^\"']{8,}[\"']",
+      "name": "Hardcoded password",
+      "excludePattern": "(process\\.env|os\\.environ|env\\.|getenv)"
+    },
+    {
+      "pattern": "(?:api[_-]?key|apikey)\\s*[:=]\\s*[\"'][^\"']{16,}[\"']",
+      "name": "API key",
+      "excludePattern": "(process\\.env|os\\.environ|env\\.|getenv)"
+    },
+    {
+      "pattern": "(?:secret|token)\\s*[:=]\\s*[\"'][a-zA-Z0-9+/=]{20,}[\"']",
+      "name": "Secret or token",
+      "excludePattern": "(process\\.env|os\\.environ|env\\.|getenv)"
+    },
+    {
+      "pattern": "AKIA[0-9A-Z]{16}",
+      "name": "AWS Access Key ID",
+      "excludePattern": "(process\\.env|os\\.environ|env\\.|getenv)"
+    },
+    {
+      "pattern": "sk-[a-zA-Z0-9]{20,}",
+      "name": "OpenAI/Anthropic API key",
+      "excludePattern": "(process\\.env|os\\.environ|env\\.|getenv)"
+    }
+  ],
+  "fileHeaders": {
+    "enabled": true,
+    "pattern": "ABOUTME:",
+    "requiredLines": 2,
+    "fileExtensions": [".js", ".ts", ".py", ".go", ".rs", ".java", ".rb", ".php"],
+    "sourceOnly": true
+  },
+  "docMappings": {
+    "src/": "CLAUDE.md",
+    ".claude/hooks/": "CLAUDE.md",
+    ".claude/commands/": "CLAUDE.md",
+    ".claude/skills/": "CLAUDE.md"
+  },
+  "requiredEnvVars": [],
+  "trackedDirectories": ["src/", "lib/", "__tests__/", "test/", "tests/"]
+}

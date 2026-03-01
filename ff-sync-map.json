@@ -1,0 +1,173 @@
+{
+  "sourceRepo": "../twilio-feature-factory",
+  "targetRepo": ".",
+  "syncState": "ff-sync-state.json",
+  "description": "Maps twilio-feature-factory files to feature-factory targets. When patterns are battle-tested in the Twilio project, they sync here after adaptation (stripping platform-specific content).",
+  "adaptationRules": {
+    "strip-twilio-patterns": "Replace AC/SK/auth token patterns with config-driven ff_credential_patterns",
+    "strip-twilio-services": "Remove Twilio service selection guides, voice/messaging/verify patterns",
+    "strip-twilio-examples": "Replace Twilio code examples with generic equivalents",
+    "strip-twilio-invariants": "Remove Architectural Invariants section (Twilio-only, lives in overlay)",
+    "use-config-reader": "Replace hardcoded paths with ff_config/ff_config_array calls",
+    "generalize-paths": "Replace functions/ with trackedDirectories, __tests__/unit/ with configurable test paths",
+    "generalize-patterns": "Replace Twilio-specific patterns with generic equivalents",
+    "generalize-language": "Remove Twilio/serverless/TwiML language, use generic terms"
+  },
+  "mappings": {
+    "docs": [
+      {
+        "source": "CLAUDE.md",
+        "target": "CLAUDE.md",
+        "adaptations": ["strip-twilio-invariants", "strip-twilio-services", "generalize-paths", "generalize-language"],
+        "syncSections": ["Development Pipeline", "Session discipline", "Your Role as Primary Agent"],
+        "notes": "Only sync specific sections, not the whole file. Twilio-specific sections stay in twilio-overlay/claude-md-section.md"
+      }
+    ],
+    "hooks": [
+      {
+        "source": ".claude/hooks/pre-write-validate.sh",
+        "target": ".claude/hooks/pre-write-validate.sh",
+        "adaptations": ["strip-twilio-patterns", "use-config-reader", "generalize-paths"],
+        "syncSections": ["PIPELINE GATE", "CREDENTIAL SAFETY CHECK", "ABOUTME VALIDATION"],
+        "notes": "Twilio credential patterns are hardcoded in source; feature-factory uses config-driven ff_credential_patterns()"
+      },
+      {
+        "source": ".claude/hooks/pre-bash-validate.sh",
+        "target": ".claude/hooks/pre-bash-validate.sh",
+        "adaptations": ["use-config-reader", "generalize-paths"],
+        "syncSections": ["DEPLOYMENT VALIDATION", "PRE-COMMIT DOCUMENTATION REMINDER"]
+      },
+      {
+        "source": ".claude/hooks/post-write.sh",
+        "target": ".claude/hooks/post-write.sh",
+        "adaptations": ["use-config-reader", "generalize-paths"],
+        "syncSections": ["SESSION FILE TRACKING", "AUTONOMOUS EVENT LOGGING"]
+      },
+      {
+        "source": ".claude/hooks/flywheel-doc-check.sh",
+        "target": ".claude/hooks/flywheel-doc-check.sh",
+        "adaptations": ["use-config-reader", "generalize-paths"],
+        "syncSections": ["COLLECT FILES FROM ALL THREE SOURCES"]
+      },
+      {
+        "source": ".claude/hooks/session-start-log.sh",
+        "target": ".claude/hooks/session-start-log.sh",
+        "adaptations": ["use-config-reader"],
+        "syncSections": ["Session Bootstrap Checks"]
+      },
+      {
+        "source": ".claude/hooks/task-completed-check.sh",
+        "target": ".claude/hooks/task-completed-check.sh",
+        "adaptations": ["strip-twilio-patterns", "use-config-reader"]
+      },
+      {
+        "source": ".claude/hooks/teammate-idle-check.sh",
+        "target": ".claude/hooks/teammate-idle-check.sh",
+        "adaptations": ["use-config-reader"]
+      }
+    ],
+    "commands": [
+      {
+        "source": ".claude/commands/architect.md",
+        "target": ".claude/commands/architect.md",
+        "adaptations": ["strip-twilio-services", "generalize-patterns"]
+      },
+      {
+        "source": ".claude/commands/spec.md",
+        "target": ".claude/commands/spec.md",
+        "adaptations": ["strip-twilio-services", "generalize-language"]
+      },
+      {
+        "source": ".claude/commands/dev.md",
+        "target": ".claude/commands/dev.md",
+        "adaptations": ["strip-twilio-examples", "generalize-patterns"]
+      },
+      {
+        "source": ".claude/commands/review.md",
+        "target": ".claude/commands/review.md",
+        "adaptations": ["strip-twilio-services", "generalize-language"]
+      },
+      {
+        "source": ".claude/commands/orchestrate.md",
+        "target": ".claude/commands/orchestrate.md",
+        "adaptations": ["generalize-language"]
+      },
+      {
+        "source": ".claude/commands/team.md",
+        "target": ".claude/commands/team.md",
+        "adaptations": ["strip-twilio-services", "generalize-language"]
+      },
+      {
+        "source": ".claude/commands/commit.md",
+        "target": ".claude/commands/commit.md",
+        "adaptations": ["generalize-paths"]
+      },
+      {
+        "source": ".claude/commands/context.md",
+        "target": ".claude/commands/context.md",
+        "adaptations": ["strip-twilio-services", "generalize-language"]
+      },
+      {
+        "source": ".claude/commands/wrap-up.md",
+        "target": ".claude/commands/wrap-up.md",
+        "adaptations": ["strip-twilio-services", "generalize-paths"]
+      }
+    ],
+    "skills": [
+      {
+        "source": ".claude/skills/tdd-workflow.md",
+        "target": ".claude/skills/tdd-workflow.md",
+        "adaptations": ["strip-twilio-examples"]
+      },
+      {
+        "source": ".claude/skills/context-compression.md",
+        "target": ".claude/skills/context-compression.md",
+        "adaptations": ["strip-twilio-examples"]
+      },
+      {
+        "source": ".claude/skills/memory-systems.md",
+        "target": ".claude/skills/memory-systems.md",
+        "adaptations": ["strip-twilio-examples"]
+      },
+      {
+        "source": ".claude/skills/autonomous-guide.md",
+        "target": ".claude/skills/autonomous-guide.md",
+        "adaptations": ["strip-twilio-services"]
+      },
+      {
+        "source": ".claude/skills/doc-flywheel.md",
+        "target": ".claude/skills/doc-flywheel.md",
+        "adaptations": ["generalize-language"]
+      },
+      {
+        "source": ".claude/skills/hooks-reference.md",
+        "target": ".claude/skills/hooks-reference.md",
+        "adaptations": ["strip-twilio-patterns", "generalize-language"]
+      }
+    ]
+  },
+  "excluded": {
+    "twilio-only-commands": [
+      ".claude/commands/twilio-docs.md",
+      ".claude/commands/twilio-logs.md",
+      ".claude/commands/validate.md",
+      ".claude/commands/deploy.md",
+      ".claude/commands/preflight.md",
+      ".claude/commands/e2e-test.md",
+      ".claude/commands/plugin-sync.md"
+    ],
+    "twilio-only-skills": [
+      ".claude/skills/voice-use-case-map.md",
+      ".claude/skills/deep-validation.md",
+      ".claude/skills/voice.md",
+      ".claude/skills/verify-docs.md"
+    ],
+    "twilio-only-references": [
+      ".claude/references/twilio-cli.md",
+      ".claude/references/twilio-api-changes.md",
+      ".claude/references/operational-gotchas.md",
+      ".claude/references/tool-boundaries.md"
+    ],
+    "reason": "These are Twilio-specific and live in twilio-overlay/"
+  }
+}

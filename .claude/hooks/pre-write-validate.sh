@@ -1,0 +1,346 @@
+#!/bin/bash
+# ABOUTME: Pre-write validation hook for credential safety, ABOUTME, and meta isolation.
+# ABOUTME: Blocks writes containing hardcoded credentials, missing headers, or violating meta mode.
+
+# Claude Code passes tool input as JSON on stdin, not env vars.
+HOOK_INPUT=""
+if [ ! -t 0 ]; then
+    HOOK_INPUT="$(cat)"
+fi
+
+FILE_PATH=""
+CONTENT=""
+if [ -n "$HOOK_INPUT" ] && command -v jq &> /dev/null; then
+    FILE_PATH="$(echo "$HOOK_INPUT" | jq -r '.tool_input.file_path // empty' 2>/dev/null)"
+    CONTENT="$(echo "$HOOK_INPUT" | jq -r '.tool_input.content // .tool_input.new_string // empty' 2>/dev/null)"
+fi
+
+# Exit early if no content to validate
+if [ -z "$CONTENT" ]; then
+    exit 0
+fi
+
+# ============================================
+# META-MODE ISOLATION CHECK
+# ============================================
+
+# Source meta-mode detection
+HOOK_DIR="$(dirname "$0")"
+if [ -f "$HOOK_DIR/_meta-mode.sh" ]; then
+    source "$HOOK_DIR/_meta-mode.sh"
+fi
+
+# Check meta-mode isolation (can be bypassed with CLAUDE_ALLOW_PRODUCTION_WRITE=true)
+if [ "$CLAUDE_META_MODE" = "true" ] && [ "$CLAUDE_ALLOW_PRODUCTION_WRITE" != "true" ]; then
+    # Get project root for path comparison
+    PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+
+    # Normalize file path (remove project root prefix for comparison)
+    RELATIVE_PATH="${FILE_PATH#$PROJECT_ROOT/}"
+
+    # Only enforce meta-mode isolation for files INSIDE the project root.
+    # Files outside (e.g., ~/.claude/plans/, ~/.claude/memory/) are not
+    # production code — credential checks below still apply to them.
+    if [[ "$RELATIVE_PATH" != "$FILE_PATH" ]]; then
+        # Allowed paths in meta mode
+        # - .meta/* - meta development files
+        # - .claude/* - Claude Code configuration (hooks, plans, etc.)
+        # - scripts/* - development scripts (often need updating)
+        # - __tests__/* - test files (part of development)
+        # - *.md in root - documentation files
+
+        ALLOWED=false
+        case "$RELATIVE_PATH" in
+            .meta/*)
+                ALLOWED=true
+                ;;
+            .claude/*)
+                ALLOWED=true
+                ;;
+            scripts/*)
+                ALLOWED=true
+                ;;
+            .github/*)
+                ALLOWED=true
+                ;;
+            __tests__/*)
+                ALLOWED=true
+                ;;
+            .env|.env.*)
+                # .env files are gitignored local config, not production code
+                ALLOWED=true
+                ;;
+            */CLAUDE.md)
+                # Domain CLAUDE.md files are development documentation, not production code
+                ALLOWED=true
+                ;;
+            *.md)
+                # Root-level markdown files are docs
+                if [[ "$RELATIVE_PATH" != */* ]]; then
+                    ALLOWED=true
+                fi
+                ;;
+        esac
+
+        if [ "$ALLOWED" = "false" ]; then
+            echo "BLOCKED: Meta mode active - changes to production code blocked!" >&2
+            echo "" >&2
+            echo "You are in META DEVELOPMENT mode (.meta/ directory exists)." >&2
+            echo "Changes should go to .meta/ during meta-development." >&2
+            echo "" >&2
+            echo "Attempted to write: $RELATIVE_PATH" >&2
+            echo "" >&2
+            echo "Allowed paths in meta mode:" >&2
+            echo "  - .meta/*" >&2
+            echo "  - .claude/plans/*" >&2
+            echo "  - .claude/archive/*" >&2
+            echo "" >&2
+            echo "To intentionally promote changes to production code:" >&2
+            echo "  export CLAUDE_ALLOW_PRODUCTION_WRITE=true" >&2
+            echo "" >&2
+            echo "Or remove .meta/ directory to exit meta mode entirely." >&2
+            echo "" >&2
+            exit 2
+        fi
+    fi
+fi
+
+# ============================================
+# CREDENTIAL SAFETY CHECK (CONFIG-DRIVEN)
+# ============================================
+
+# Skip credential checks for test files, docs, and env examples
+if [[ "$FILE_PATH" =~ \.test\.(js|ts|py|go|rs)$ ]] || [[ "$FILE_PATH" =~ \.spec\.(js|ts)$ ]] || \
+   [[ "$FILE_PATH" =~ __tests__/ ]] || [[ "$FILE_PATH" =~ /tests?/ ]] || \
+   [[ "$FILE_PATH" =~ \.md$ ]] || \
+   [[ "$FILE_PATH" =~ \.env\.example$ ]] || [[ "$FILE_PATH" =~ \.env\.sample$ ]]; then
+    # Test files, docs, and env examples may contain example credentials
+    exit 0
+fi
+
+# Source config reader for credential patterns
+if [ -f "$HOOK_DIR/_config-reader.sh" ]; then
+    source "$HOOK_DIR/_config-reader.sh"
+fi
+
+# Check each configured credential pattern
+while IFS=$'\t' read -r PATTERN NAME EXCLUDE; do
+    [ -z "$PATTERN" ] && continue
+
+    if echo "$CONTENT" | grep -qE "$PATTERN"; then
+        if [ -n "$EXCLUDE" ]; then
+            # Check if match is excluded (e.g., env var reference)
+            if echo "$CONTENT" | grep -E "$PATTERN" | grep -vqE "$EXCLUDE"; then
+                echo "BLOCKED: Hardcoded $NAME detected!" >&2
+                echo "" >&2
+                echo "Found pattern matching '$NAME' which appears to be a hardcoded credential." >&2
+                echo "Use environment variables instead." >&2
+                echo "" >&2
+                exit 2
+            fi
+        else
+            echo "BLOCKED: Hardcoded $NAME detected!" >&2
+            echo "" >&2
+            echo "Found pattern matching '$NAME' which appears to be a hardcoded credential." >&2
+            echo "Use environment variables instead." >&2
+            echo "" >&2
+            exit 2
+        fi
+    fi
+done < <(ff_credential_patterns)
+
+# ============================================
+# ABOUTME VALIDATION FOR NEW FILES (CONFIG-DRIVEN)
+# ============================================
+
+if [ -f "$HOOK_DIR/_config-reader.sh" ]; then
+    # Get the relative path for header check
+    PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+    REL_PATH="${FILE_PATH#$PROJECT_ROOT/}"
+
+    # Check if this file type requires headers
+    if ff_requires_header "$REL_PATH"; then
+        HEADER_PATTERN=$(ff_config ".fileHeaders.pattern" "ABOUTME:")
+
+        # Check if file doesn't exist yet (new file) and content is being written (Write tool)
+        if [ ! -f "$FILE_PATH" ] && echo "$HOOK_INPUT" | jq -e '.tool_input.content' &>/dev/null; then
+            # Validate header is present in content being written
+            if ! echo "$CONTENT" | head -5 | grep -q "$HEADER_PATTERN"; then
+                echo "BLOCKED: New file missing $HEADER_PATTERN comment!" >&2
+                echo "" >&2
+                echo "All source files must start with a 2-line $HEADER_PATTERN comment:" >&2
+                echo "" >&2
+                echo "// $HEADER_PATTERN [What this file does - action-oriented]" >&2
+                echo "// $HEADER_PATTERN [Additional context - key behaviors, dependencies]" >&2
+                echo "" >&2
+                exit 2
+            fi
+        fi
+    fi
+fi
+
+# ============================================
+# PIPELINE GATE — New source files require tests (CONFIG-DRIVEN)
+# ============================================
+
+# Only check new files in tracked source directories (not tests, not helpers)
+if [ -f "$HOOK_DIR/_config-reader.sh" ]; then
+    PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+    GATE_REL_PATH="${FILE_PATH#$PROJECT_ROOT/}"
+
+    # Check if this is a new file in a tracked source directory
+    IS_SOURCE_FILE=false
+    TRACKED_DIRS=$(ff_config_array ".project.sourceDirectories" 2>/dev/null)
+    if [ -n "$TRACKED_DIRS" ]; then
+        while IFS= read -r dir; do
+            if [[ "$GATE_REL_PATH" == "$dir"* ]]; then
+                IS_SOURCE_FILE=true
+                break
+            fi
+        done <<< "$TRACKED_DIRS"
+    fi
+
+    # Skip test files and non-source files
+    if [[ "$GATE_REL_PATH" =~ (\.test\.|\.spec\.|__tests__|/tests?/) ]]; then
+        IS_SOURCE_FILE=false
+    fi
+
+    if [ "$IS_SOURCE_FILE" = true ] && [ ! -f "$FILE_PATH" ]; then
+        # This is a NEW source file — check for corresponding tests
+        if [ "${SKIP_PIPELINE_GATE:-}" = "true" ]; then
+            echo "Pipeline gate bypassed (SKIP_PIPELINE_GATE=true)" >&2
+        else
+            # Derive expected test path from the source file path
+            # e.g., src/handlers/auth.js → test/handlers/auth.test.js
+            GATE_BASENAME=$(basename "$GATE_REL_PATH")
+            GATE_EXT="${GATE_BASENAME##*.}"
+            GATE_NAME="${GATE_BASENAME%.*}"
+            GATE_DIR=$(dirname "$GATE_REL_PATH")
+
+            # Check for test file in common test locations
+            TEST_FOUND=false
+            for test_dir in __tests__ test tests; do
+                for test_suffix in "test.${GATE_EXT}" "spec.${GATE_EXT}"; do
+                    if [ -f "$PROJECT_ROOT/${test_dir}/${GATE_NAME}.${test_suffix}" ] || \
+                       [ -f "$PROJECT_ROOT/${test_dir}/${GATE_DIR#*/}/${GATE_NAME}.${test_suffix}" ]; then
+                        TEST_FOUND=true
+                        break 2
+                    fi
+                done
+            done
+            # Also check for co-located tests (e.g., src/auth.test.js next to src/auth.js)
+            if [ -f "$PROJECT_ROOT/${GATE_DIR}/${GATE_NAME}.test.${GATE_EXT}" ] || \
+               [ -f "$PROJECT_ROOT/${GATE_DIR}/${GATE_NAME}.spec.${GATE_EXT}" ]; then
+                TEST_FOUND=true
+            fi
+
+            if [ "$TEST_FOUND" = false ]; then
+                echo "" >&2
+                echo "BLOCKED: New source file has no corresponding tests!" >&2
+                echo "" >&2
+                echo "  Source:   ${GATE_REL_PATH}" >&2
+                echo "  Expected: test file for ${GATE_NAME}.${GATE_EXT}" >&2
+                echo "" >&2
+                echo "This project enforces pipeline-driven development." >&2
+                echo "For new features, use the development pipeline:" >&2
+                echo "" >&2
+                echo "  /orchestrate new-feature \"[description]\"" >&2
+                echo "" >&2
+                echo "Or run phases manually:" >&2
+                echo "  /test-gen [feature]    # Write failing tests first" >&2
+                echo "  /dev [task]            # Then implement" >&2
+                echo "" >&2
+                echo "Override: SKIP_PIPELINE_GATE=true (for emergency fixes)" >&2
+                exit 2
+            fi
+        fi
+    fi
+fi
+
+# ============================================
+# HIGH-RISK ASSERTION WARNING (not blocking)
+# ============================================
+
+# Check documentation files for high-risk assertion patterns
+if [[ "$FILE_PATH" =~ CLAUDE\.md$ ]] || [[ "$FILE_PATH" =~ \.claude/skills/.*\.md$ ]]; then
+    WARNED=false
+
+    # Check for negative behavioral claims without citation
+    if echo "$CONTENT" | grep -qiE "(cannot|can't|not able to|impossible|not supported|not available)" && \
+       ! echo "$CONTENT" | grep -qE "<!-- (verified|UNVERIFIED):"; then
+        if [ "$WARNED" = false ]; then
+            echo "" >&2
+            echo "HIGH-RISK ASSERTION WARNING" >&2
+            echo "   File: $FILE_PATH" >&2
+            WARNED=true
+        fi
+        echo "   -> Negative behavioral claim detected (cannot/not supported/etc.)" >&2
+    fi
+
+    # Check for absolute claims about APIs/services without citation
+    if echo "$CONTENT" | grep -qE "\b(always|never|must|only)\b" && \
+       echo "$CONTENT" | grep -qiE "(api|webhook|endpoint|service)" && \
+       ! echo "$CONTENT" | grep -qE "<!-- (verified|UNVERIFIED):"; then
+        if [ "$WARNED" = false ]; then
+            echo "" >&2
+            echo "HIGH-RISK ASSERTION WARNING" >&2
+            echo "   File: $FILE_PATH" >&2
+            WARNED=true
+        fi
+        echo "   -> Absolute claim detected (always/never/must/only)" >&2
+    fi
+
+    # Check for numeric limits without citation (e.g., "max 16KB", "up to 4")
+    if echo "$CONTENT" | grep -qE "(max|maximum|up to|at least|limit)[^a-z]*[0-9]+" && \
+       ! echo "$CONTENT" | grep -qE "<!-- (verified|UNVERIFIED):"; then
+        if [ "$WARNED" = false ]; then
+            echo "" >&2
+            echo "HIGH-RISK ASSERTION WARNING" >&2
+            echo "   File: $FILE_PATH" >&2
+            WARNED=true
+        fi
+        echo "   -> Numeric limit detected without citation" >&2
+    fi
+
+    if [ "$WARNED" = true ]; then
+        echo "" >&2
+        echo "   Did you verify these claims against official documentation?" >&2
+        echo "   Add citations: <!-- verified: docs.example.com/... -->" >&2
+        echo "   Or mark uncertain: <!-- UNVERIFIED: reason -->" >&2
+        echo "" >&2
+    fi
+fi
+
+# ============================================
+# NON-EVERGREEN NAMING PATTERN WARNING (not blocking)
+# ============================================
+
+# Check for naming patterns that indicate temporal context
+# These names will become misleading as codebase evolves
+if echo "$CONTENT" | grep -qE "\b(Improved|Enhanced|Better|Refactored)[A-Z][a-zA-Z]*"; then
+    MATCHED_NAMES=$(echo "$CONTENT" | grep -oE "\b(Improved|Enhanced|Better|Refactored)[A-Z][a-zA-Z]*" | head -5 | tr '\n' ', ' | sed 's/,$//')
+    echo "" >&2
+    echo "NON-EVERGREEN NAMING WARNING" >&2
+    echo "   File: $FILE_PATH" >&2
+    echo "   Found: $MATCHED_NAMES" >&2
+    echo "" >&2
+    echo "   Names like 'ImprovedX' or 'BetterY' become misleading over time." >&2
+    echo "   What's 'improved' today will be 'old' tomorrow." >&2
+    echo "   Use descriptive names that explain WHAT it does, not WHEN it was written." >&2
+    echo "" >&2
+fi
+
+# Also check for "New" prefix followed by uppercase (but allow "new" in sentences)
+if echo "$CONTENT" | grep -qE "(const|let|var|function|class|type|interface|def|func|fn)\s+New[A-Z]"; then
+    MATCHED_NAMES=$(echo "$CONTENT" | grep -oE "(const|let|var|function|class|type|interface|def|func|fn)\s+New[A-Z][a-zA-Z]*" | sed 's/^[a-z]* //' | head -5 | tr '\n' ', ' | sed 's/,$//')
+    echo "" >&2
+    echo "NON-EVERGREEN NAMING WARNING" >&2
+    echo "   File: $FILE_PATH" >&2
+    echo "   Found: $MATCHED_NAMES" >&2
+    echo "" >&2
+    echo "   Names like 'NewHandler' will be outdated when you add another one." >&2
+    echo "   Use descriptive names instead: 'StreamingHandler', 'BatchHandler', etc." >&2
+    echo "" >&2
+fi
+
+exit 0
