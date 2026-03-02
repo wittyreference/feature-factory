@@ -60,10 +60,16 @@ Only update docs where the session's changes actually warrant it. Don't touch do
 |------------|------------|
 | API/SDK gotcha (clear domain) | Domain CLAUDE.md Gotchas section |
 | Cross-cutting gotcha | `.claude/references/operational-gotchas.md` |
-| High-impact rule | Root CLAUDE.md "Architectural Invariants" |
+| High-impact rule | Root CLAUDE.md |
+| Architectural decision (why X over Y) | `DESIGN_DECISIONS.md` |
 | Per-developer convention | Keep in auto-memory |
 
 After promoting, replace the detailed item with a pointer (e.g., "See [domain]/CLAUDE.md#gotchas"). Don't delete — pointers prevent re-discovery of the same gotcha.
+
+**Cross-check learnings and auto-memory**: Ensure nothing fell through the cracks:
+- Read the session learnings file — are there entries that should also be in auto-memory (for cross-session persistence)?
+- Read auto-memory — are there entries from this session that should also be in the learnings file (for the promote/clear flywheel)?
+- Are there auto-memory entries that represent an architectural choice worth recording in `DESIGN_DECISIONS.md`?
 
 **Capture inward**: Add session learnings that should persist across sessions to auto-memory.
 
@@ -80,7 +86,17 @@ If significant code was produced this session (especially from autonomous work v
 3. Report how many exercises were generated for the next interactive session
 4. If no events were logged, skip this step
 
-### 6. Clear Pending Actions
+### 6. Context Budget Check
+
+Quick health check on auto-loaded context size:
+
+```bash
+wc -l CLAUDE.md
+```
+
+Report the line count in the summary. If auto-memory is over 150 lines, flag it — entries beyond 200 are truncated and never seen. Prune by replacing promoted entries with pointers.
+
+### 7. Clear Pending Actions
 
 After addressing flywheel suggestions, clear the pending actions file:
 ```markdown
@@ -93,7 +109,7 @@ Actions detected by the documentation flywheel. Review before committing.
 <!-- Doc suggestions will be appended below this line by flywheel-doc-check.sh -->
 ```
 
-### 7. Summary
+### 8. Summary
 
 Output what was updated:
 

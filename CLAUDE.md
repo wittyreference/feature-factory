@@ -134,10 +134,26 @@ For the full capture-promote-clear documentation workflow, see the `doc-flywheel
 - When a multi-step validation or implementation plan exists, NEVER silently skip steps. Report completion status for every step.
 - If authentication or credentials expire mid-session, surface it to the user immediately.
 
+## When Blocked by a Hook
+
+When a pre-write or pre-bash hook blocks your action, **do not guess at workarounds**. Follow this protocol:
+
+1. **Check `settings.local.json` first.** The permissions list is a record of previously-approved workflows. Search it for the pattern you need — the answer is almost always already there.
+2. **Use the established bypass.** For meta-mode write blocks, prepend the env var to a Bash command:
+   ```bash
+   CLAUDE_ALLOW_PRODUCTION_WRITE=true cat > src/path/file.js << 'EOF'
+   ...
+   EOF
+   ```
+3. **Do NOT** edit hooks, modify `settings.json` env blocks, add paths to allowed lists, or ask the user to set environment variables. These are all wrong.
+4. If `settings.local.json` has no prior art and you genuinely don't know the bypass, **ask the user** instead of trying multiple approaches.
+
 # Session discipline
 
 - Prioritize the pipeline over ad-hoc implementation. For tasks that create new source files, always invoke `/orchestrate` or run pipeline phases sequentially. Ad-hoc coding (skipping architect/spec) is only appropriate for bug fixes and small edits to existing files.
-- Run the full relevant test suite before presenting work as complete.
+- Do not convert lazy/conditional `require()` calls to static `import` statements without verifying the conditional logic still works. Node.js conditional requires exist for a reason (optional dependencies, environment-specific loading).
+- Run the full relevant test suite before presenting work as complete. A passing subset is not sufficient — regressions in unrelated tests still need to be caught.
+- After modifying TypeScript files, run `tsc --noEmit` in the relevant package to verify compilation before committing.
 
 # Testing
 
