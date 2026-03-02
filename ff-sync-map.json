@@ -64,6 +64,26 @@
         "source": ".claude/hooks/teammate-idle-check.sh",
         "target": ".claude/hooks/teammate-idle-check.sh",
         "adaptations": ["use-config-reader"]
+      },
+      {
+        "source": ".claude/hooks/post-bash.sh",
+        "target": ".claude/hooks/post-bash.sh",
+        "adaptations": ["use-config-reader", "generalize-paths"]
+      },
+      {
+        "source": ".claude/hooks/session-checklist.sh",
+        "target": ".claude/hooks/session-checklist.sh",
+        "adaptations": ["use-config-reader", "generalize-language"]
+      },
+      {
+        "source": ".claude/hooks/subagent-log.sh",
+        "target": ".claude/hooks/subagent-log.sh",
+        "adaptations": ["use-config-reader"]
+      },
+      {
+        "source": ".claude/hooks/notify-ready.sh",
+        "target": ".claude/hooks/notify-ready.sh",
+        "adaptations": ["use-config-reader"]
       }
     ],
     "commands": [
@@ -111,6 +131,31 @@
         "source": ".claude/commands/wrap-up.md",
         "target": ".claude/commands/wrap-up.md",
         "adaptations": ["strip-twilio-services", "generalize-paths"]
+      },
+      {
+        "source": ".claude/commands/docs.md",
+        "target": ".claude/commands/docs.md",
+        "adaptations": ["strip-twilio-services", "generalize-language"]
+      },
+      {
+        "source": ".claude/commands/push.md",
+        "target": ".claude/commands/push.md",
+        "adaptations": ["generalize-paths"]
+      },
+      {
+        "source": ".claude/commands/test-gen.md",
+        "target": ".claude/commands/test-gen.md",
+        "adaptations": ["strip-twilio-examples", "generalize-patterns"]
+      },
+      {
+        "source": ".claude/commands/test.md",
+        "target": ".claude/commands/test.md",
+        "adaptations": ["generalize-language"]
+      },
+      {
+        "source": ".claude/commands/learn.md",
+        "target": ".claude/commands/learn.md",
+        "adaptations": ["generalize-language"]
       }
     ],
     "skills": [
@@ -143,6 +188,23 @@
         "source": ".claude/skills/hooks-reference.md",
         "target": ".claude/skills/hooks-reference.md",
         "adaptations": ["strip-twilio-patterns", "generalize-language"]
+      },
+      {
+        "source": ".claude/skills/multi-agent-patterns.md",
+        "target": ".claude/skills/multi-agent-patterns.md",
+        "adaptations": ["strip-twilio-services", "generalize-language"]
+      },
+      {
+        "source": ".claude/skills/agent-teams-guide.md",
+        "target": ".claude/skills/agent-teams-guide.md",
+        "adaptations": ["strip-twilio-services", "generalize-language"]
+      }
+    ],
+    "references": [
+      {
+        "source": ".claude/references/doc-map.md",
+        "target": ".claude/references/doc-map.md",
+        "adaptations": ["strip-twilio-services", "generalize-paths"]
       }
     ]
   },
@@ -154,20 +216,36 @@
       ".claude/commands/deploy.md",
       ".claude/commands/preflight.md",
       ".claude/commands/e2e-test.md",
-      ".claude/commands/plugin-sync.md"
+      ".claude/commands/plugin-sync.md",
+      ".claude/commands/uber-validation.md",
+      ".claude/commands/ff-sync.md"
     ],
     "twilio-only-skills": [
       ".claude/skills/voice-use-case-map.md",
       ".claude/skills/deep-validation.md",
       ".claude/skills/voice.md",
-      ".claude/skills/verify-docs.md"
+      ".claude/skills/verify-docs.md",
+      ".claude/skills/sip-byoc.md",
+      ".claude/skills/compliance-regulatory.md",
+      ".claude/skills/payments.md"
     ],
     "twilio-only-references": [
       ".claude/references/twilio-cli.md",
       ".claude/references/twilio-api-changes.md",
       ".claude/references/operational-gotchas.md",
-      ".claude/references/tool-boundaries.md"
+      ".claude/references/tool-boundaries.md",
+      ".claude/references/brainstorm.md"
     ],
-    "reason": "These are Twilio-specific and live in twilio-overlay/"
+    "meta-only-hooks": [
+      ".claude/hooks/_meta-mode.sh",
+      ".claude/hooks/archive-plan.sh",
+      ".claude/hooks/generate-learning-exercises.sh",
+      ".claude/hooks/post-compact-summary.sh",
+      ".claude/hooks/pre-compact.sh"
+    ],
+    "aliased": [
+      { "source": ".claude/skills/context-engineering.md", "mappedAs": ".claude/skills/context-compression.md", "reason": "Same content, different filename in FF" }
+    ],
+    "reason": "Twilio-specific items live in twilio-overlay/. Meta-only hooks are factory dev infrastructure."
   }
 }

@@ -97,6 +97,33 @@ done <<< "$SOURCE_PATHS"
 
 DRIFT_COUNT=${#DRIFTED_FILES[@]}
 
+# ─── Coverage audit: find source files not in sync map or excluded list ───
+
+# Collect all known paths (mapped + excluded + aliased)
+KNOWN_PATHS=$(jq -r '
+  [.mappings | to_entries[] | .value[] | .source] +
+  [.excluded | to_entries[] | select(.key != "reason") | .value[] | (if type == "object" then .source else . end)]
+' "$SYNC_MAP" 2>/dev/null | jq -r '.[]')
+
+# Scan actual source files
+UNMAPPED_FILES=()
+for dir in ".claude/commands" ".claude/skills" ".claude/hooks" ".claude/references"; do
+    if [[ ! -d "$SOURCE_REPO/$dir" ]]; then
+        continue
+    fi
+    for filepath in "$SOURCE_REPO/$dir"/*; do
+        [[ ! -f "$filepath" ]] && continue
+        basename=$(basename "$filepath")
+        relpath="$dir/$basename"
+        # Check if this path is in the known set
+        if ! echo "$KNOWN_PATHS" | grep -qxF "$relpath"; then
+            UNMAPPED_FILES+=("$relpath")
+        fi
+    done
+done
+
+UNMAPPED_COUNT=${#UNMAPPED_FILES[@]}
+
 # Output mode
 MODE="${1:---report}"
 
@@ -109,29 +136,59 @@ case "$MODE" in
             echo "$f"
         done
         ;;
-    --report|*)
-        if [[ "$DRIFT_COUNT" -eq 0 ]]; then
-            echo "Feature Factory sync: No drift detected. Source and target are in sync."
+    --coverage)
+        if [[ "$UNMAPPED_COUNT" -eq 0 ]]; then
+            echo "Coverage: All source files are mapped or excluded. 0 gaps."
+            exit 0
         else
             echo ""
-            echo "FEATURE FACTORY DRIFT REPORT"
-            echo "============================"
+            echo "FF SYNC MAP COVERAGE GAPS"
+            echo "========================="
             echo ""
-            echo "$DRIFT_COUNT source file(s) changed since last sync"
-            if [[ -n "$LAST_SYNC_COMMIT" ]]; then
-                LAST_SYNC_DATE=$(jq -r '.lastSyncTimestamp // "unknown"' "$SYNC_STATE" 2>/dev/null)
-                echo "Last sync: $LAST_SYNC_DATE (${LAST_SYNC_COMMIT:0:7})"
-            else
-                echo "Last sync: never (no sync state found)"
-            fi
-            echo "Source: $SOURCE_REPO"
-            echo ""
-            echo "Drifted files:"
-            for detail in "${DRIFTED_DETAILS[@]}"; do
-                echo "  - $detail"
+            echo "$UNMAPPED_COUNT source file(s) not in sync map or excluded list:"
+            for f in "${UNMAPPED_FILES[@]}"; do
+                echo "  - $f"
             done
             echo ""
-            echo "Run /ff-sync to review and apply changes."
+            echo "Add to ff-sync-map.json mappings (if generic) or excluded (if Twilio/meta-only)."
+            exit 1
+        fi
+        ;;
+    --report|*)
+        if [[ "$DRIFT_COUNT" -eq 0 && "$UNMAPPED_COUNT" -eq 0 ]]; then
+            echo "Feature Factory sync: No drift detected. Source and target are in sync."
+        else
+            if [[ "$DRIFT_COUNT" -gt 0 ]]; then
+                echo ""
+                echo "FEATURE FACTORY DRIFT REPORT"
+                echo "============================"
+                echo ""
+                echo "$DRIFT_COUNT source file(s) changed since last sync"
+                if [[ -n "$LAST_SYNC_COMMIT" ]]; then
+                    LAST_SYNC_DATE=$(jq -r '.lastSyncTimestamp // "unknown"' "$SYNC_STATE" 2>/dev/null)
+                    echo "Last sync: $LAST_SYNC_DATE (${LAST_SYNC_COMMIT:0:7})"
+                else
+                    echo "Last sync: never (no sync state found)"
+                fi
+                echo "Source: $SOURCE_REPO"
+                echo ""
+                echo "Drifted files:"
+                for detail in "${DRIFTED_DETAILS[@]}"; do
+                    echo "  - $detail"
+                done
+                echo ""
+                echo "Run /ff-sync to review and apply changes."
+            fi
+            if [[ "$UNMAPPED_COUNT" -gt 0 ]]; then
+                echo ""
+                echo "COVERAGE GAPS ($UNMAPPED_COUNT unmapped)"
+                echo "─────────────────────────────"
+                for f in "${UNMAPPED_FILES[@]}"; do
+                    echo "  ? $f"
+                done
+                echo ""
+                echo "Add to ff-sync-map.json mappings or excluded list."
+            fi
         fi
         ;;
 esac
