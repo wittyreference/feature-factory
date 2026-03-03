@@ -165,9 +165,10 @@
         "adaptations": ["strip-twilio-examples"]
       },
       {
-        "source": ".claude/skills/context-compression.md",
+        "source": ".claude/skills/context-engineering.md",
         "target": ".claude/skills/context-compression.md",
-        "adaptations": ["strip-twilio-examples"]
+        "adaptations": ["strip-twilio-examples"],
+        "notes": "Factory consolidated context-compression + context-fundamentals into context-engineering. FF keeps context-compression.md as filename."
       },
       {
         "source": ".claude/skills/memory-systems.md",
@@ -198,6 +199,39 @@
         "source": ".claude/skills/agent-teams-guide.md",
         "target": ".claude/skills/agent-teams-guide.md",
         "adaptations": ["strip-twilio-services", "generalize-language"]
+      },
+      {
+        "source": ".claude/skills/env-doctor.md",
+        "target": ".claude/skills/env-doctor.md",
+        "adaptations": ["strip-twilio-patterns", "generalize-language"]
+      }
+    ],
+    "workflows": [
+      {
+        "source": ".claude/workflows/README.md",
+        "target": ".claude/workflows/README.md",
+        "adaptations": ["strip-twilio-services", "generalize-language"]
+      }
+    ],
+    "rules": [
+      {
+        "source": ".claude/rules/tools-architecture.md",
+        "target": ".claude/rules/tools-architecture.md",
+        "adaptations": ["strip-twilio-services", "generalize-language"]
+      }
+    ],
+    "scripts": [
+      {
+        "source": "scripts/env-doctor.sh",
+        "target": "scripts/env-doctor.sh",
+        "adaptations": ["generalize-patterns"],
+        "notes": "FF version is config-driven (reads criticalVars/dangerousVars from ff.config.json)"
+      },
+      {
+        "source": ".envrc",
+        "target": "scripts/envrc.template",
+        "adaptations": [],
+        "notes": "Generic template — users customize unset list for their platform"
       }
     ],
     "references": [
@@ -243,9 +277,21 @@
       ".claude/hooks/post-compact-summary.sh",
       ".claude/hooks/pre-compact.sh"
     ],
-    "aliased": [
-      { "source": ".claude/skills/context-engineering.md", "mappedAs": ".claude/skills/context-compression.md", "reason": "Same content, different filename in FF" }
+    "factory-internal-scripts": [
+      "scripts/dogfood-env.sh",
+      "scripts/setup.js",
+      "scripts/check-demo-health.sh",
+      "scripts/demo.sh",
+      "scripts/enable-autonomous.sh",
+      "scripts/run-headless.sh",
+      "scripts/run-validation-suite.sh",
+      "scripts/generate-postman-collection.js",
+      "scripts/plugin-drift-check.sh",
+      "scripts/validate-meta-separation.sh",
+      "scripts/verify-shipping-ready.sh",
+      "scripts/validation-reset.sh",
+      "scripts/check-claude-doc-drift.sh"
     ],
-    "reason": "Twilio-specific items live in twilio-overlay/. Meta-only hooks are factory dev infrastructure."
+    "reason": "Twilio-specific items live in twilio-overlay/. Meta-only hooks are factory dev infrastructure. Factory-internal scripts are specific to the Twilio factory repo."
   }
 }

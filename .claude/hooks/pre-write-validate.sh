@@ -111,6 +111,7 @@ fi
 
 # Skip credential checks for test files, docs, and env examples
 if [[ "$FILE_PATH" =~ \.test\.(js|ts|py|go|rs)$ ]] || [[ "$FILE_PATH" =~ \.spec\.(js|ts)$ ]] || \
+   [[ "$FILE_PATH" =~ _test\.go$ ]] || \
    [[ "$FILE_PATH" =~ __tests__/ ]] || [[ "$FILE_PATH" =~ /tests?/ ]] || \
    [[ "$FILE_PATH" =~ \.md$ ]] || \
    [[ "$FILE_PATH" =~ \.env\.example$ ]] || [[ "$FILE_PATH" =~ \.env\.sample$ ]]; then
@@ -155,15 +156,18 @@ done < <(ff_credential_patterns)
 
 if [ -f "$HOOK_DIR/_config-reader.sh" ]; then
     # Get the relative path for header check
+    # Resolve symlinks to handle macOS /tmp → /private/tmp
     PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-    REL_PATH="${FILE_PATH#$PROJECT_ROOT/}"
+    RESOLVED_FILE_PATH="$(realpath "$FILE_PATH" 2>/dev/null || echo "$FILE_PATH")"
+    RESOLVED_PROJECT_ROOT="$(realpath "$PROJECT_ROOT" 2>/dev/null || echo "$PROJECT_ROOT")"
+    REL_PATH="${RESOLVED_FILE_PATH#$RESOLVED_PROJECT_ROOT/}"
 
     # Check if this file type requires headers
     if ff_requires_header "$REL_PATH"; then
         HEADER_PATTERN=$(ff_config ".fileHeaders.pattern" "ABOUTME:")
 
         # Check if file doesn't exist yet (new file) and content is being written (Write tool)
-        if [ ! -f "$FILE_PATH" ] && echo "$HOOK_INPUT" | jq -e '.tool_input.content' &>/dev/null; then
+        if [ ! -f "$FILE_PATH" ] && [ ! -f "$RESOLVED_FILE_PATH" ] && echo "$HOOK_INPUT" | jq -e '.tool_input.content' &>/dev/null; then
             # Validate header is present in content being written
             if ! echo "$CONTENT" | head -5 | grep -q "$HEADER_PATTERN"; then
                 echo "BLOCKED: New file missing $HEADER_PATTERN comment!" >&2
@@ -185,8 +189,11 @@ fi
 
 # Only check new files in tracked source directories (not tests, not helpers)
 if [ -f "$HOOK_DIR/_config-reader.sh" ]; then
+    # Reuse resolved paths from ABOUTME section (or compute if not set)
     PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-    GATE_REL_PATH="${FILE_PATH#$PROJECT_ROOT/}"
+    RESOLVED_FILE_PATH="${RESOLVED_FILE_PATH:-$(realpath "$FILE_PATH" 2>/dev/null || echo "$FILE_PATH")}"
+    RESOLVED_PROJECT_ROOT="${RESOLVED_PROJECT_ROOT:-$(realpath "$PROJECT_ROOT" 2>/dev/null || echo "$PROJECT_ROOT")}"
+    GATE_REL_PATH="${RESOLVED_FILE_PATH#$RESOLVED_PROJECT_ROOT/}"
 
     # Check if this is a new file in a tracked source directory
     IS_SOURCE_FILE=false
@@ -200,12 +207,12 @@ if [ -f "$HOOK_DIR/_config-reader.sh" ]; then
         done <<< "$TRACKED_DIRS"
     fi
 
-    # Skip test files and non-source files
-    if [[ "$GATE_REL_PATH" =~ (\.test\.|\.spec\.|__tests__|/tests?/) ]]; then
+    # Skip test files and non-source files (including Go _test.go convention)
+    if [[ "$GATE_REL_PATH" =~ (\.test\.|\.spec\.|_test\.go$|__tests__|/tests?/) ]]; then
         IS_SOURCE_FILE=false
     fi
 
-    if [ "$IS_SOURCE_FILE" = true ] && [ ! -f "$FILE_PATH" ]; then
+    if [ "$IS_SOURCE_FILE" = true ] && [ ! -f "$FILE_PATH" ] && [ ! -f "$RESOLVED_FILE_PATH" ]; then
         # This is a NEW source file — check for corresponding tests
         if [ "${SKIP_PIPELINE_GATE:-}" = "true" ]; then
             echo "Pipeline gate bypassed (SKIP_PIPELINE_GATE=true)" >&2
@@ -230,7 +237,14 @@ if [ -f "$HOOK_DIR/_config-reader.sh" ]; then
             done
             # Also check for co-located tests (e.g., src/auth.test.js next to src/auth.js)
             if [ -f "$PROJECT_ROOT/${GATE_DIR}/${GATE_NAME}.test.${GATE_EXT}" ] || \
-               [ -f "$PROJECT_ROOT/${GATE_DIR}/${GATE_NAME}.spec.${GATE_EXT}" ]; then
+               [ -f "$PROJECT_ROOT/${GATE_DIR}/${GATE_NAME}.spec.${GATE_EXT}" ] || \
+               [ -f "$RESOLVED_PROJECT_ROOT/${GATE_DIR}/${GATE_NAME}.test.${GATE_EXT}" ] || \
+               [ -f "$RESOLVED_PROJECT_ROOT/${GATE_DIR}/${GATE_NAME}.spec.${GATE_EXT}" ]; then
+                TEST_FOUND=true
+            fi
+            # Go convention: handler_test.go alongside handler.go
+            if [ -f "$PROJECT_ROOT/${GATE_DIR}/${GATE_NAME}_test.${GATE_EXT}" ] || \
+               [ -f "$RESOLVED_PROJECT_ROOT/${GATE_DIR}/${GATE_NAME}_test.${GATE_EXT}" ]; then
                 TEST_FOUND=true
             fi
 

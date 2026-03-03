@@ -274,6 +274,12 @@ detect_source_dirs() {
             [ -d "$TARGET_DIR/cmd" ] && dirs="cmd/"
             [ -d "$TARGET_DIR/internal" ] && dirs="$dirs internal/"
             [ -d "$TARGET_DIR/pkg" ] && dirs="$dirs pkg/"
+            # Flat-layout Go repos have source at root (e.g., gin-gonic/gin)
+            if [ -z "$(echo "$dirs" | xargs)" ]; then
+                if ls "$TARGET_DIR"/*.go &>/dev/null; then
+                    dirs="./"
+                fi
+            fi
             ;;
         rust)
             dirs="src/"
@@ -505,7 +511,7 @@ else
     "command": "$TEST_CMD",
     "coverageCommand": "$COVERAGE_CMD",
     "coverageThreshold": 80,
-    "testFilePatterns": ["**/*.test.*", "**/*.spec.*", "__tests__/**", "tests/**"]
+    "testFilePatterns": ["**/*.test.*", "**/*.spec.*", "**/*_test.go", "__tests__/**", "tests/**"]
   },
   "linting": {
     "command": "$LINT_CMD",

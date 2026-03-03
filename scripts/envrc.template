@@ -1,0 +1,24 @@
+# ABOUTME: direnv environment template for Feature Factory projects.
+# ABOUTME: Provides environment isolation by clearing inherited vars before loading project .env.
+#
+# Usage: Copy this file to your project root as .envrc, then run: direnv allow
+#
+# Customize the unset list below to match your project's env vars.
+# Any vars listed here will be cleared when you cd into the project,
+# preventing leaked values from other projects or your shell profile.
+
+# --- Step 1: Unset inherited vars that could leak from parent shell ---
+# Add your project's credential vars here. Without this, existing shell
+# vars persist and silently override .env values because dotenv's default
+# mode does NOT override existing process.env values.
+#
+# Example for a Twilio project:
+#   unset TWILIO_ACCOUNT_SID TWILIO_AUTH_TOKEN
+#   unset TWILIO_REGION TWILIO_EDGE
+#
+# Example for an AWS project:
+#   unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
+#   unset AWS_REGION AWS_DEFAULT_REGION
+
+# --- Step 2: Load project .env if it exists ---
+dotenv_if_exists
