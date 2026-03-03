@@ -1,11 +1,5 @@
 {
-  "lastSyncCommit": "b2a8fb9",
-  "lastSyncTimestamp": "2026-03-02T08:18:40Z",
-  "sourceRepo": "../twilio-feature-factory",
-  "syncedItems": [
-    "CLAUDE.md: When Blocked by a Hook section, session discipline updates",
-    ".claude/commands/context.md: Refactored compact format",
-    ".claude/commands/wrap-up.md: Context budget check, cross-check step",
-    ".claude/skills/context-compression.md: Context engineering content"
-  ]
+  "last_sync_commit": "043b059",
+  "last_sync": "2026-03-03T21:31:43Z",
+  "notes": "Synced from twilio-feature-factory commit 043b059 (env-fix + plugin audit)"
 }
