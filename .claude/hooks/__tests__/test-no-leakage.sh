@@ -25,13 +25,13 @@ run_check() {
     local matches
     if [ -n "$exclude_pattern" ]; then
         matches=$(grep -rnE "$pattern" "$PROJECT_ROOT" \
-            --include='*.sh' --include='*.md' --include='*.json' \
+            --include='*.sh' --include='*.md' --include='*.json' --include='*.js' --include='*.ts' \
             --exclude-dir='.git' --exclude-dir='node_modules' --exclude-dir='.meta' --exclude-dir='twilio-overlay' --exclude-dir='blog' --exclude-dir='validation' \
             --exclude='test-no-leakage.sh' --exclude='ff-sync-map.json' --exclude='ff-sync-state.json' --exclude='ff-sync.md' \
             2>/dev/null | grep -vE "$exclude_pattern" || true)
     else
         matches=$(grep -rnE "$pattern" "$PROJECT_ROOT" \
-            --include='*.sh' --include='*.md' --include='*.json' \
+            --include='*.sh' --include='*.md' --include='*.json' --include='*.js' --include='*.ts' \
             --exclude-dir='.git' --exclude-dir='node_modules' --exclude-dir='.meta' --exclude-dir='twilio-overlay' --exclude-dir='blog' --exclude-dir='validation' \
             --exclude='test-no-leakage.sh' --exclude='ff-sync-map.json' --exclude='ff-sync-state.json' --exclude='ff-sync.md' \
             2>/dev/null || true)

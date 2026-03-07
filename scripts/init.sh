@@ -47,8 +47,8 @@ Examples:
   # Install into a specific project
   $(basename "$0") ~/my-project
 
-  # Install with Twilio overlay
-  $(basename "$0") ~/my-project --overlay ~/twilio-overlay
+  # Install with a platform overlay
+  $(basename "$0") ~/my-project --overlay ~/my-platform-overlay
 
   # Preview what would be installed
   $(basename "$0") . --dry-run

@@ -151,7 +151,7 @@ When a pre-write or pre-bash hook blocks your action, **do not guess at workarou
 # Session discipline
 
 - Prioritize the pipeline over ad-hoc implementation. For tasks that create new source files, always invoke `/orchestrate` or run pipeline phases sequentially. Ad-hoc coding (skipping architect/spec) is only appropriate for bug fixes and small edits to existing files.
-- Do not convert lazy/conditional `require()` calls to static `import` statements without verifying the conditional logic still works. Node.js conditional requires exist for a reason (optional dependencies, environment-specific loading).
+- Do not convert lazy/conditional imports to static imports without verifying the conditional logic still works. Conditional loading exists for a reason (optional dependencies, environment-specific loading).
 - Run the full relevant test suite before presenting work as complete. A passing subset is not sufficient — regressions in unrelated tests still need to be caught.
 - After modifying TypeScript files, run `tsc --noEmit` in the relevant package to verify compilation before committing.
 
@@ -171,16 +171,16 @@ Configure your project's commands in `ff.config.json`. The hooks will use these 
 ```json
 {
   "testing": {
-    "command": "npm test",
-    "coverageCommand": "npm run test:coverage",
+    "command": "<your test command>",
+    "coverageCommand": "<your coverage command>",
     "coverageThreshold": 80
   },
   "linting": {
-    "command": "npm run lint",
-    "fixCommand": "npm run lint:fix"
+    "command": "<your lint command>",
+    "fixCommand": "<your lint fix command>"
   },
   "deployment": {
-    "command": "npm run deploy"
+    "command": "<your deploy command>"
   }
 }
 ```
@@ -218,4 +218,4 @@ Configure your project's commands in `ff.config.json`. The hooks will use these 
 
 ## Platform-Specific Extensions
 
-If this project uses a platform overlay (e.g., Twilio, AWS, GCP), platform-specific patterns, commands, and skills will be available in `.claude/skills/platform-patterns.md` and as additional slash commands. Check the documentation navigator above for platform-specific entries.
+If this project uses a platform overlay (e.g., cloud platforms, API providers), platform-specific patterns, commands, and skills will be available in `.claude/skills/platform-patterns.md` and as additional slash commands. Check the documentation navigator above for platform-specific entries.

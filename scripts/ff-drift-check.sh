@@ -150,7 +150,7 @@ case "$MODE" in
                 echo "  - $f"
             done
             echo ""
-            echo "Add to ff-sync-map.json mappings (if generic) or excluded (if Twilio/meta-only)."
+            echo "Add to ff-sync-map.json mappings (if generic) or excluded (if platform/meta-only)."
             exit 1
         fi
         ;;
