@@ -4,7 +4,7 @@ Use [context-hub](https://github.com/andrewyng/context-hub) (`chub`) to fetch cu
 
 ## When to Use
 
-- Before writing code that calls **any external API** (Stripe, OpenAI, Twilio, etc.)
+- Before writing code that calls **any external API** (Stripe, OpenAI, SendGrid, etc.)
 - When unsure about current API parameters, response shapes, or SDK methods
 - When the architect identifies external service dependencies
 
@@ -65,7 +65,7 @@ Labels: `outdated`, `inaccurate`, `incomplete`, `wrong-examples`, `wrong-version
 
 If `chub` is not installed:
 1. Note it in your response: "context-hub not available — proceeding with best-effort knowledge"
-2. Fall back to project CLAUDE.md files, web search, or `/twilio-docs` for Twilio-specific APIs
+2. Fall back to project CLAUDE.md files, web search, or platform-specific documentation skills
 3. Suggest the user install it: `npm install -g @aisuite/chub`
 
 ## Installation
