@@ -122,6 +122,11 @@ STATEEOF
     fi
 fi
 
+# 4. Update check (quiet mode — only prints if update available)
+if [ -f "$PROJECT_ROOT/scripts/check-updates.sh" ]; then
+    bash "$PROJECT_ROOT/scripts/check-updates.sh" --quiet 2>&1 || true
+fi
+
 # --- Reset Session Tracking ---
 # Reset session-start timestamp for the flywheel
 date +%s > "$SESSION_DIR/.session-start"
