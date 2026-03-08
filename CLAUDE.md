@@ -31,6 +31,7 @@ The hooks in `.claude/hooks/` auto-detect the environment. Claude must also foll
 | Autonomous mode | `.claude/skills/autonomous-guide.md` (load on demand) |
 | Agent teams details | `.claude/skills/agent-teams-guide.md` (load on demand) |
 | Doc flywheel | `.claude/skills/doc-flywheel.md` (load on demand) |
+| Context Hub (external APIs) | `.claude/skills/context-hub.md` (load on demand) |
 | Learning exercises | `.claude/commands/learn.md`, `.meta/learning/` |
 | Implementation progress | Todo file (see [Meta-Development Mode](#meta-development-mode)) |
 | Session learnings | Learnings file (see [Meta-Development Mode](#meta-development-mode)) |
@@ -72,6 +73,7 @@ This project uses a **doc-first approach**: Check → Act → Record.
 ### Before Code Changes
 
 Read the relevant `CLAUDE.md` file for the domain you're modifying.
+- **External APIs**: If code calls non-project APIs, check context-hub: `chub search "<api>"`. See `.claude/skills/context-hub.md` for workflow.
 
 ### Discovery Capture
 

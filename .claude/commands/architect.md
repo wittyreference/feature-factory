@@ -42,11 +42,25 @@ If `.claude/skills/platform-patterns.md` exists, load it for domain-specific ser
 
 ## Design Review Process
 
+### Context Loading
+
+Before starting a design review:
+
+1. **Project CLAUDE.md files**: Load the relevant domain docs
+2. **Platform patterns**: If `.claude/skills/platform-patterns.md` exists, load it
+3. **External API docs**: If the feature uses external APIs, check context-hub:
+   `chub search "<api>"` — load `.claude/skills/context-hub.md` for the full workflow
+4. **Similar existing code**: Find patterns to follow in the codebase
+
+---
+
 ### Step 1: Understand the Request
 
 - What is the user trying to accomplish?
 - What capabilities/services are needed?
 - How does this fit with existing functionality?
+- Are external APIs involved? If `chub` is available, run `chub search "<api>"` for current docs.
+  Load `.claude/skills/context-hub.md` for the full workflow.
 
 ### Step 2: Evaluate Architecture Fit
 
