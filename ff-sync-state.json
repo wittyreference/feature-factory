@@ -1,5 +1,8 @@
 {
-  "last_sync_commit": "043b059",
-  "last_sync": "2026-03-03T21:31:43Z",
-  "notes": "Synced from twilio-feature-factory commit 043b059 (env-fix + plugin audit)"
+  "lastSyncCommit": "70c5dd2",
+  "lastSyncTimestamp": "2026-03-09T04:15:22Z",
+  "lastSyncSource": "../twilio-feature-factory",
+  "itemsSynced": 23,
+  "newMappings": ["check-updates.md", "prototype.md", "recall.md", "context-hub.md"],
+  "newExclusions": ["media-streams.md", "video.md", "doc-navigator.md"]
 }
