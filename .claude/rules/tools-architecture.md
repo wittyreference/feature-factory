@@ -1,5 +1,6 @@
 ---
 paths:
+  - "agents/**"
   - ".claude/commands/**"
   - ".claude/skills/**"
 ---
@@ -30,22 +31,30 @@ paths:
 │ /review     │ │ agent   │ │             │
 │ /docs       │ │ work    │ │             │
 └─────────────┘ └─────────┘ └─────────────┘
+
+         OR (for headless automation)
+
+┌─────────────────────────────────────────────────────────────────┐
+│  Feature Factory (Claude Agent SDK)                             │
+│  ───────────────────────────────────────────────────────────────│
+│  npx feature-factory new-feature "task"                         │
+│  CI/CD pipelines, programmatic access                           │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-## Key Principles
+## When to Use What
 
-1. **Slash commands** are specialized agent roles with focused prompts
-2. **Agent Teams** coordinate multiple Claude Code instances for parallel work
-3. **MCP tools** provide structured API access without shell invocation
-4. **Plan mode** ensures user approval before significant changes
-5. **Hooks** enforce quality gates (TDD, linting, credential safety) automatically
+**Claude Code (Interactive -- Single Session):**
+- Working in the CLI interactively
+- Plan mode + approval workflow
+- Invoke slash commands as needed
 
-## When to Use Each
+**Claude Code (Interactive -- Agent Teams):**
+- Parallel work where agents communicate
+- Bug debugging with competing hypotheses
+- Multi-lens code review (security + performance + tests)
+- See the `agent-teams-guide` skill for details
 
-| Need | Use |
-|------|-----|
-| Sequential development pipeline | `/orchestrate` |
-| Parallel investigation or review | `/team` |
-| Specific phase of work | Individual slash command |
-| Query external data | MCP tools |
-| One-off operations | CLI directly |
+**Feature Factory (Headless):**
+- CI/CD automation, programmatic access
+- Running workflows without human interaction

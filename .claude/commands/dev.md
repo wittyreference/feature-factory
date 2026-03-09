@@ -30,31 +30,31 @@ Recommendation: Run `/test-gen [feature]` first to generate failing tests.
 
 ```
 1. VERIFY tests exist and FAIL
-   └── If no tests: STOP → suggest /test-gen
-   └── If tests pass: STOP → something is wrong
+   \u2514\u2500\u2500 If no tests: STOP \u2192 suggest /test-gen
+   \u2514\u2500\u2500 If tests pass: STOP \u2192 something is wrong
 
 2. READ the test file
-   └── Understand what behavior is expected
-   └── Note the function signature required
-   └── Identify edge cases being tested
+   \u2514\u2500\u2500 Understand what behavior is expected
+   \u2514\u2500\u2500 Note the function signature required
+   \u2514\u2500\u2500 Identify edge cases being tested
 
 3. IMPLEMENT minimal code
-   └── Write ONLY enough to pass the first test
-   └── Run tests after each small change
-   └── Don't anticipate future tests
+   \u2514\u2500\u2500 Write ONLY enough to pass the first test
+   \u2514\u2500\u2500 Run tests after each small change
+   \u2514\u2500\u2500 Don't anticipate future tests
 
 4. RUN tests
-   └── If fail: adjust implementation
-   └── If pass: move to next failing test
+   \u2514\u2500\u2500 If fail: adjust implementation
+   \u2514\u2500\u2500 If pass: move to next failing test
 
 5. REFACTOR (only when tests pass)
-   └── Clean up code structure
-   └── Remove duplication
-   └── Run tests to confirm still green
+   \u2514\u2500\u2500 Clean up code structure
+   \u2514\u2500\u2500 Remove duplication
+   \u2514\u2500\u2500 Run tests to confirm still green
 
 6. COMMIT
-   └── Atomic commit with descriptive message
-   └── NEVER use --no-verify
+   \u2514\u2500\u2500 Atomic commit with descriptive message
+   \u2514\u2500\u2500 NEVER use --no-verify
 ```
 
 ## Implementation Standards
@@ -115,4 +115,6 @@ Files to review:
 
 ## Current Task
 
+<user_request>
 $ARGUMENTS
+</user_request>

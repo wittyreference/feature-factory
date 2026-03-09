@@ -156,6 +156,21 @@
         "source": ".claude/commands/learn.md",
         "target": ".claude/commands/learn.md",
         "adaptations": ["generalize-language"]
+      },
+      {
+        "source": ".claude/commands/check-updates.md",
+        "target": ".claude/commands/check-updates.md",
+        "adaptations": []
+      },
+      {
+        "source": ".claude/commands/prototype.md",
+        "target": ".claude/commands/prototype.md",
+        "adaptations": ["generalize-language"]
+      },
+      {
+        "source": ".claude/commands/recall.md",
+        "target": ".claude/commands/recall.md",
+        "adaptations": []
       }
     ],
     "skills": [
@@ -204,6 +219,11 @@
         "source": ".claude/skills/env-doctor.md",
         "target": ".claude/skills/env-doctor.md",
         "adaptations": ["strip-twilio-patterns", "generalize-language"]
+      },
+      {
+        "source": ".claude/skills/context-hub.md",
+        "target": ".claude/skills/context-hub.md",
+        "adaptations": ["generalize-language"]
       }
     ],
     "workflows": [
@@ -261,14 +281,17 @@
       ".claude/skills/verify-docs.md",
       ".claude/skills/sip-byoc.md",
       ".claude/skills/compliance-regulatory.md",
-      ".claude/skills/payments.md"
+      ".claude/skills/payments.md",
+      ".claude/skills/media-streams.md",
+      ".claude/skills/video.md"
     ],
     "twilio-only-references": [
       ".claude/references/twilio-cli.md",
       ".claude/references/twilio-api-changes.md",
       ".claude/references/operational-gotchas.md",
       ".claude/references/tool-boundaries.md",
-      ".claude/references/brainstorm.md"
+      ".claude/references/brainstorm.md",
+      ".claude/references/doc-navigator.md"
     ],
     "meta-only-hooks": [
       ".claude/hooks/_meta-mode.sh",

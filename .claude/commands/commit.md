@@ -6,11 +6,19 @@ Stage and commit changes with pre-commit validation and conventional commit mess
 
 Run these checks before staging. Stop and report if any fail.
 
-### 1. Test Suite
+### 1. TypeScript Compilation (if applicable)
+
+If the project uses TypeScript and modified files include `.ts` files:
+
+```bash
+npx tsc --noEmit
+```
+
+### 2. Test Suite
 
 Run the project's test suite. All tests must pass.
 
-### 2. ABOUTME Comments
+### 3. ABOUTME Comments
 
 For any **new** files (untracked), verify they start with a 2-line ABOUTME comment:
 
@@ -101,4 +109,6 @@ Post-commit:
 
 ## What to Commit
 
+<user_request>
 $ARGUMENTS
+</user_request>

@@ -106,32 +106,63 @@ if [ "$CLAUDE_META_MODE" = "true" ] && [ "$CLAUDE_ALLOW_PRODUCTION_WRITE" != "tr
 fi
 
 # ============================================
+# RESOLVE PATHS FOR DOWNSTREAM CHECKS
+# ============================================
+# Resolve symlinks once for all downstream sections.
+# macOS: /tmp → /private/tmp causes ${FILE_PATH#$PROJECT_ROOT/} to fail
+# when git rev-parse returns /private/tmp but Claude passes /tmp.
+PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+RESOLVED_FILE_PATH="$(realpath "$FILE_PATH" 2>/dev/null || echo "$FILE_PATH")"
+RESOLVED_PROJECT_ROOT="$(realpath "$PROJECT_ROOT" 2>/dev/null || echo "$PROJECT_ROOT")"
+
+# ============================================
 # CREDENTIAL SAFETY CHECK (CONFIG-DRIVEN)
 # ============================================
 
-# Skip credential checks for test files, docs, and env examples
+# Skip credential checks for infrastructure/config files that legitimately
+# contain credentials, plus test files, docs, and env examples.
+# Uses a flag instead of exit 0 so downstream checks (assertion warnings,
+# naming patterns) still run — those are specifically designed for .md files.
+SKIP_CREDENTIALS=false
+
+# Test files and docs
 if [[ "$FILE_PATH" =~ \.test\.(js|ts|py|go|rs)$ ]] || [[ "$FILE_PATH" =~ \.spec\.(js|ts)$ ]] || \
    [[ "$FILE_PATH" =~ _test\.go$ ]] || \
    [[ "$FILE_PATH" =~ __tests__/ ]] || [[ "$FILE_PATH" =~ /tests?/ ]] || \
    [[ "$FILE_PATH" =~ \.md$ ]] || \
    [[ "$FILE_PATH" =~ \.env\.example$ ]] || [[ "$FILE_PATH" =~ \.env\.sample$ ]]; then
-    # Test files, docs, and env examples may contain example credentials
-    exit 0
+    SKIP_CREDENTIALS=true
 fi
 
-# Source config reader for credential patterns
-if [ -f "$HOOK_DIR/_config-reader.sh" ]; then
-    source "$HOOK_DIR/_config-reader.sh"
+# Infrastructure/config files that legitimately contain credentials.
+# These are gitignored or external to the repo — not application code.
+if [[ "$(basename "$FILE_PATH")" =~ ^\.env(\..*)?$ ]] || \
+   [[ "$FILE_PATH" =~ node_modules/ ]]; then
+    SKIP_CREDENTIALS=true
 fi
 
-# Check each configured credential pattern
-while IFS=$'\t' read -r PATTERN NAME EXCLUDE; do
-    [ -z "$PATTERN" ] && continue
+if [ "$SKIP_CREDENTIALS" = "false" ]; then
+    # Source config reader for credential patterns
+    if [ -f "$HOOK_DIR/_config-reader.sh" ]; then
+        source "$HOOK_DIR/_config-reader.sh"
+    fi
 
-    if echo "$CONTENT" | grep -qE "$PATTERN"; then
-        if [ -n "$EXCLUDE" ]; then
-            # Check if match is excluded (e.g., env var reference)
-            if echo "$CONTENT" | grep -E "$PATTERN" | grep -vqE "$EXCLUDE"; then
+    # Check each configured credential pattern
+    while IFS=$'\t' read -r PATTERN NAME EXCLUDE; do
+        [ -z "$PATTERN" ] && continue
+
+        if echo "$CONTENT" | grep -qE "$PATTERN"; then
+            if [ -n "$EXCLUDE" ]; then
+                # Check if match is excluded (e.g., env var reference)
+                if echo "$CONTENT" | grep -E "$PATTERN" | grep -vqE "$EXCLUDE"; then
+                    echo "BLOCKED: Hardcoded $NAME detected!" >&2
+                    echo "" >&2
+                    echo "Found pattern matching '$NAME' which appears to be a hardcoded credential." >&2
+                    echo "Use environment variables instead." >&2
+                    echo "" >&2
+                    exit 2
+                fi
+            else
                 echo "BLOCKED: Hardcoded $NAME detected!" >&2
                 echo "" >&2
                 echo "Found pattern matching '$NAME' which appears to be a hardcoded credential." >&2
@@ -139,16 +170,9 @@ while IFS=$'\t' read -r PATTERN NAME EXCLUDE; do
                 echo "" >&2
                 exit 2
             fi
-        else
-            echo "BLOCKED: Hardcoded $NAME detected!" >&2
-            echo "" >&2
-            echo "Found pattern matching '$NAME' which appears to be a hardcoded credential." >&2
-            echo "Use environment variables instead." >&2
-            echo "" >&2
-            exit 2
         fi
-    fi
-done < <(ff_credential_patterns)
+    done < <(ff_credential_patterns)
+fi
 
 # ============================================
 # ABOUTME VALIDATION FOR NEW FILES (CONFIG-DRIVEN)

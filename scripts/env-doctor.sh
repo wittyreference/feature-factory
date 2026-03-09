@@ -108,7 +108,12 @@ if [ ${#CRITICAL_VARS[@]} -gt 0 ]; then
         elif [ -n "$shell_val" ] && [ -z "$file_val" ]; then
             check "$var" 2 "set in shell ($(mask "$shell_val")) but not in .env — shell value will be used"
         elif [ -z "$shell_val" ] && [ -n "$file_val" ]; then
-            check "$var" 0
+            # Check if file value is still a placeholder
+            if echo "$file_val" | grep -qE '^(your_|xxx|placeholder|changeme|TODO)'; then
+                check "$var" 2 ".env has placeholder value -- update with real credentials"
+            else
+                check "$var" 0
+            fi
         else
             check "$var" 1 "not set anywhere — add to .env"
         fi
@@ -169,6 +174,7 @@ if command -v direnv &>/dev/null; then
 else
     check "direnv" 2 "not installed — shell vars can leak between projects"
     echo -e "    ${DIM}Install: brew install direnv${NC}"
+    echo -e "    ${DIM}Then:    echo 'eval \"\$(direnv hook zsh)\"' >> ~/.zshrc && direnv allow${NC}"
 fi
 echo ""
 

@@ -19,6 +19,12 @@ When autonomous sessions (headless, `/orchestrate`, `/team`) produce code, you s
 - **Decline = suppress** — if you say "skip" or decline, no more exercises this session
 - **Pause for input** — after posing a question, STOP. No hints, no examples, no leading. Wait for the user's response.
 
+## Arguments
+
+<user_request>
+$ARGUMENTS
+</user_request>
+
 ## Behavior Based on Arguments
 
 ### No arguments (empty)

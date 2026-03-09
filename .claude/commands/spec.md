@@ -131,4 +131,6 @@ When specification is complete:
 
 ## Current Task
 
+<user_request>
 $ARGUMENTS
+</user_request>

@@ -44,27 +44,11 @@ The hooks in `.claude/hooks/` auto-detect the environment. Claude must also foll
 
 ## Development Pipeline
 
-For any task that creates new source files or implements significant new features, you MUST use the development pipeline — either via `/orchestrate` or by running the phases sequentially:
+For any task that creates new source files or implements significant new features, you MUST use the development pipeline via `/orchestrate` (architect -> prototype -> spec -> test-gen -> dev -> review -> docs). The pre-write hook enforces this — new source files without corresponding tests will be blocked.
 
-1. `/architect` — Design review and pattern selection
-2. `/spec` — Detailed technical specification
-3. `/test-gen` — Write failing tests (TDD Red Phase)
-4. `/dev` — Implement to pass tests (TDD Green Phase)
-5. `/review` — Code review and security audit
-6. `/docs` — Documentation updates
-
-**When to use the pipeline:**
-- Creating new source files in tracked directories
-- Adding a significant new feature or capability
-- Implementing anything that touches multiple modules
-
-**When the pipeline is NOT needed:**
-- Bug fixes to existing files
-- Documentation updates
-- Configuration changes
-- Single-line tweaks or refactors within an existing file
-
-The pre-write hook enforces this — new source files without corresponding tests will be blocked.
+**When to use**: New files in tracked directories, new features, anything touching multiple modules.
+**When NOT needed**: Bug fixes, doc updates, config changes, single-line refactors within existing files.
+**When to prototype**: Conditional — when architect identifies unknowns (unfamiliar APIs, ambiguous docs, multi-service interactions not previously tested, undocumented edge cases). Output is a short "Spike Results" note, not production code.
 
 ## Documentation Protocol
 
@@ -153,7 +137,7 @@ When a pre-write or pre-bash hook blocks your action, **do not guess at workarou
 # Session discipline
 
 - Prioritize the pipeline over ad-hoc implementation. For tasks that create new source files, always invoke `/orchestrate` or run pipeline phases sequentially. Ad-hoc coding (skipping architect/spec) is only appropriate for bug fixes and small edits to existing files.
-- Do not convert lazy/conditional imports to static imports without verifying the conditional logic still works. Conditional loading exists for a reason (optional dependencies, environment-specific loading).
+- Do not convert lazy/conditional `require()` calls to static `import` statements without verifying the conditional logic still works. Conditional requires exist for a reason (optional dependencies, environment-specific loading).
 - Run the full relevant test suite before presenting work as complete. A passing subset is not sufficient — regressions in unrelated tests still need to be caught.
 - After modifying TypeScript files, run `tsc --noEmit` in the relevant package to verify compilation before committing.
 
