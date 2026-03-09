@@ -12,7 +12,7 @@ Every pattern in this toolkit was earned through real bugs, real oversights, and
 
 ## What's Inside
 
-### 16 Event-Driven Hooks
+### 15 Event-Driven Hooks
 
 Hooks fire automatically on Claude Code events (file writes, bash commands, session lifecycle). They enforce quality without requiring you to remember to run checks.
 
@@ -37,7 +37,7 @@ Hooks fire automatically on Claude Code events (file writes, bash commands, sess
 
 All hooks read configuration from `ff.config.json` — no hardcoded platform assumptions.
 
-### 14 Slash Commands
+### 18 Slash Commands
 
 Commands are specialized subagent roles invoked with `/command-name`.
 
@@ -73,8 +73,12 @@ Commands are specialized subagent roles invoked with `/command-name`.
 | `/context` | Context optimization — summarize, compress, load, analyze |
 | `/learn` | Interactive learning exercises on autonomous work |
 | `/wrap-up` | End-of-session documentation sweep |
+| `/check-updates` | Check for newer versions of Feature Factory |
+| `/ff-sync` | Detect and reconcile drift between upstream and local |
+| `/recall` | Search and recall context from previous sessions |
+| `/prototype` | Spike / proof-of-concept exploration |
 
-### 9 Knowledge Skills
+### 11 Knowledge Skills
 
 Skills are reference documents Claude loads on demand for specialized knowledge.
 
@@ -88,7 +92,9 @@ Skills are reference documents Claude loads on demand for specialized knowledge.
 | `autonomous-guide` | Running headless/autonomous sessions with quality gates |
 | `tdd-workflow` | Test-driven development cycle, pitfalls, and enforcement |
 | `doc-flywheel` | Capture → Promote → Clear documentation workflow |
-| `hooks-reference` | Complete reference for all 16 hooks |
+| `hooks-reference` | Complete reference for all hooks |
+| `context-hub` | External API reference loader, contextual knowledge |
+| `env-doctor` | Environment conflict detection and resolution |
 
 ## Quick Start
 
@@ -323,14 +329,30 @@ Install with:
 
 The overlay's config is deep-merged with `ff.config.json`. Commands and skills with the same filename replace the generic versions; new ones are added alongside.
 
+### Shipped Overlay: Twilio
+
+Feature Factory ships a Twilio overlay in `twilio-overlay/` as a reference implementation and production-tested platform integration:
+
+- **7 commands**: `/deploy`, `/e2e-test`, `/plugin-sync`, `/preflight`, `/twilio-docs`, `/twilio-logs`, `/validate`
+- **4+ skills**: voice, deep-validation, compliance-regulatory, payments, and more
+- **5 references**: twilio-cli, tool-boundaries, operational-gotchas, brainstorm, twilio-api-changes
+- **12 domain CLAUDE.md files**: Per-directory documentation for `functions/` and `agents/`
+
+Install into a Twilio project:
+
+```bash
+/path/to/feature-factory/scripts/init.sh ~/your-twilio-project --overlay ./twilio-overlay
+```
+
 ## Project Structure
 
 ```
 your-project/
   .claude/
-    hooks/           # 16 event-driven hooks (auto-fire on Claude Code events)
-    commands/        # 14 slash commands (/architect, /dev, /test-gen, etc.)
-    skills/          # 9 knowledge documents (loaded on demand)
+    hooks/           # 15 event-driven hooks (auto-fire on Claude Code events)
+    commands/        # 18 slash commands (/architect, /dev, /test-gen, etc.)
+    skills/          # 11 knowledge documents (loaded on demand)
+    rules/           # Declarative agent rules
     references/      # Documentation maps
     settings.json    # Hook registrations and environment config
   .meta/             # Meta-development state (gitignored)
@@ -343,7 +365,18 @@ your-project/
   ff.config.json     # Central configuration (edit this)
   CLAUDE.md          # Root documentation (auto-loaded by Claude Code)
   DESIGN_DECISIONS.md  # Architectural decision records
+  twilio-overlay/    # Shipped Twilio platform overlay
 ```
+
+### Maintenance Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `scripts/init.sh` | Install Feature Factory into a project |
+| `scripts/check-updates.sh` | Check for newer versions on GitHub |
+| `scripts/update.sh` | Self-update from upstream (handles clones, forks, templates) |
+| `scripts/env-doctor.sh` | Detect shell vs `.env` credential conflicts |
+| `scripts/ff-drift-check.sh` | Detect drift between FF source and installed copy |
 
 ## Testing
 
