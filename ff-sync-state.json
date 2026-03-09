@@ -1,8 +1,6 @@
 {
-  "lastSyncCommit": "70c5dd2",
-  "lastSyncTimestamp": "2026-03-09T04:15:22Z",
+  "lastSyncCommit": "2593596",
+  "lastSyncTimestamp": "2026-03-09T04:25:54Z",
   "lastSyncSource": "../twilio-feature-factory",
-  "itemsSynced": 23,
-  "newMappings": ["check-updates.md", "prototype.md", "recall.md", "context-hub.md"],
-  "newExclusions": ["media-streams.md", "video.md", "doc-navigator.md"]
+  "itemsSynced": 25
 }
