@@ -259,6 +259,11 @@
         "source": ".claude/references/doc-map.md",
         "target": ".claude/references/doc-map.md",
         "adaptations": ["strip-twilio-services", "generalize-paths"]
+      },
+      {
+        "source": ".claude/references/hook-troubleshooting.md",
+        "target": ".claude/references/hook-troubleshooting.md",
+        "adaptations": ["strip-twilio-patterns", "generalize-language"]
       }
     ]
   },

@@ -62,6 +62,21 @@ Before starting a design review:
 - Are external APIs involved? If `chub` is available, run `chub search "<api>"` for current docs.
   Load `.claude/skills/context-hub.md` for the full workflow.
 
+#### Requirements Checklist
+
+When the request is vague or underspecified, gather these before proceeding:
+
+| Category | Questions |
+|----------|-----------|
+| **Users** | Concurrent users? Internal vs external? |
+| **Channels** | Which interfaces/protocols? Must-have vs nice-to-have? |
+| **Scale** | Volume (requests/day)? Growth trajectory? |
+| **Integration** | Existing systems to integrate with? |
+| **Compliance** | Industry regulations (HIPAA, PCI, GDPR, SOX)? Data residency? |
+| **Timeline** | Prototype vs production timeline? |
+
+Don't block on gathering all of these — use reasonable defaults, then call out assumptions explicitly.
+
 ### Step 2: Evaluate Architecture Fit
 
 ```markdown
@@ -98,6 +113,38 @@ Before recommending an approach, assess whether a prototype spike is needed:
 If unknowns exist, recommend `/prototype` before `/spec`. State what questions the spike should answer.
 
 If no unknowns exist (team has prior experience with all APIs involved), skip to `/spec`.
+
+### Step 3b: Regulatory Conflict Check
+
+When the request mentions **retention**, **recording**, **compliance**, **GDPR**, **HIPAA**, **PCI**, or **SOX**, surface conflicting requirements before proceeding:
+
+| Regulation | Recording Retention | Key Constraint |
+|------------|-------------------|----------------|
+| GDPR | 30 days (default, right to erasure) | Must delete on request; minimize data |
+| SOX | 7 years | Must retain; cannot delete early |
+| HIPAA | 6 years | PHI access controls; BAA required |
+| PCI DSS | Do not store | Never record card numbers |
+
+**If two or more conflicting regulations apply:**
+1. Flag the conflict explicitly in your Architecture Fit Analysis
+2. List the specific contradictions (e.g., "GDPR requires deletion on request, SOX requires 7-year retention")
+3. Recommend the user resolve the conflict before proceeding to `/spec`
+4. Suggest tiered retention (e.g., separate PII-scrubbed transcripts from raw recordings) if applicable
+
+Do NOT silently choose one regulation over another. The user must make the compliance decision.
+
+### Step 3c: Feasibility & Scope Assessment
+
+Before recommending an approach, assess whether the request falls within the project's platform capabilities:
+
+| Signal | Action |
+|--------|--------|
+| Requires custom infrastructure beyond the project scope | Flag as **beyond-platform**. State what the project provides and what needs custom work. |
+| Scale exceeds current deployment limits | Note deployment limitations. Suggest appropriate deployment model. |
+| Requires services or capabilities not available | Identify gap explicitly. Don't suggest overcomplicated workarounds. |
+| Feasible but complex | Proceed normally with complexity estimate (Low/Medium/High). |
+
+If beyond-platform: Provide a clear "What the project CAN do" + "What you need beyond it" breakdown rather than attempting an architecture that hides the complexity.
 
 ### Step 4: Recommend Approach
 

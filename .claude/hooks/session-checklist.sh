@@ -90,9 +90,11 @@ fi
 if [[ ${#ITEMS[@]} -gt 0 ]]; then
     echo ""
     echo "SESSION CHECKLIST"
+    echo "----------------------------------------"
     for item in "${ITEMS[@]}"; do
         echo "  - $item"
     done
+    echo "----------------------------------------"
     echo ""
 fi
 

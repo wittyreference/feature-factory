@@ -1,6 +1,11 @@
 #!/bin/bash
 # ABOUTME: Pre-write validation hook for credential safety, ABOUTME, and meta isolation.
 # ABOUTME: Blocks writes containing hardcoded credentials, missing headers, or violating meta mode.
+#
+# META MODE BYPASS: Use Bash with inline env var to write to production paths:
+#   CLAUDE_ALLOW_PRODUCTION_WRITE=true cat > src/path/file.js << 'EOF'
+#   ...
+#   EOF
 
 # Claude Code passes tool input as JSON on stdin, not env vars.
 HOOK_INPUT=""
@@ -35,8 +40,15 @@ if [ "$CLAUDE_META_MODE" = "true" ] && [ "$CLAUDE_ALLOW_PRODUCTION_WRITE" != "tr
     # Get project root for path comparison
     PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
 
+    # Resolve symlinks in both paths to handle macOS /tmp → /private/tmp
+    # For new files, resolve directory portion (file doesn't exist yet)
+    _META_DIR="$(dirname "$FILE_PATH")"
+    _META_RESOLVED_DIR="$(realpath "$_META_DIR" 2>/dev/null || echo "$_META_DIR")"
+    RESOLVED_FILE_PATH="$_META_RESOLVED_DIR/$(basename "$FILE_PATH")"
+    RESOLVED_PROJECT_ROOT="$(realpath "$PROJECT_ROOT" 2>/dev/null || echo "$PROJECT_ROOT")"
+
     # Normalize file path (remove project root prefix for comparison)
-    RELATIVE_PATH="${FILE_PATH#$PROJECT_ROOT/}"
+    RELATIVE_PATH="${RESOLVED_FILE_PATH#$RESOLVED_PROJECT_ROOT/}"
 
     # Only enforce meta-mode isolation for files INSIDE the project root.
     # Files outside (e.g., ~/.claude/plans/, ~/.claude/memory/) are not

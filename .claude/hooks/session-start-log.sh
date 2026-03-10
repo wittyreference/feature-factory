@@ -127,12 +127,12 @@ if [ -f "$PROJECT_ROOT/scripts/check-updates.sh" ]; then
     bash "$PROJECT_ROOT/scripts/check-updates.sh" --quiet 2>&1 || true
 fi
 
-# 6. Context Hub availability
+# 5. Context Hub availability
 if command -v chub >/dev/null 2>&1; then
     echo "Context Hub (chub) available for external API docs." >&2
 fi
 
-# 7. Codebase smoke test (syntax + deps, <200ms)
+# 6. Codebase smoke test (syntax + deps, <200ms)
 SMOKE_FAILURES=""
 
 # 7a. node_modules existence

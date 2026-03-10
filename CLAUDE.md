@@ -44,7 +44,7 @@ The hooks in `.claude/hooks/` auto-detect the environment. Claude must also foll
 
 ## Development Pipeline
 
-For any task that creates new source files or implements significant new features, you MUST use the development pipeline via `/orchestrate` (architect -> prototype -> spec -> test-gen -> dev -> review -> docs). The pre-write hook enforces this — new source files without corresponding tests will be blocked.
+For any task that creates new source files or implements significant new features, you MUST use the development pipeline via `/orchestrate` (architect → prototype → spec → test-gen → dev → review → docs). The pre-write hook enforces this — new source files without corresponding tests will be blocked.
 
 **When to use**: New files in tracked directories, new features, anything touching multiple modules.
 **When NOT needed**: Bug fixes, doc updates, config changes, single-line refactors within existing files.
