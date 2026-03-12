@@ -127,6 +127,11 @@ if [ -f "$PROJECT_ROOT/scripts/check-updates.sh" ]; then
     bash "$PROJECT_ROOT/scripts/check-updates.sh" --quiet 2>&1 || true
 fi
 
+# 4b. Changelog monitor (new features in Claude Code + Agent SDK)
+if [ -f "$PROJECT_ROOT/scripts/check-changelog.sh" ]; then
+    bash "$PROJECT_ROOT/scripts/check-changelog.sh" --quiet 2>&1 || true
+fi
+
 # 5. Context Hub availability
 if command -v chub >/dev/null 2>&1; then
     echo "Context Hub (chub) available for external API docs." >&2
