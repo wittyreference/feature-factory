@@ -73,7 +73,25 @@ if [ -n "$TRACKED_DIRS" ]; then
     fi
 fi
 
-# --- 7. Pending learning exercises ---
+# --- 7. MEMORY.md size check ---
+MEMORY_FILE="$HOME/.claude/projects/$(echo "$PROJECT_ROOT" | sed 's|/|-|g')/memory/MEMORY.md"
+if [[ -f "$MEMORY_FILE" ]]; then
+    MEMORY_LINES=$(wc -l < "$MEMORY_FILE" | tr -d ' ')
+    if [[ "$MEMORY_LINES" -gt 100 ]]; then
+        ITEMS+=("MEMORY: ${MEMORY_LINES}/200 lines — run /wrap-up to prune stale entries")
+    fi
+fi
+
+# --- 8. README drift check ---
+README_DRIFT_SCRIPT="$PROJECT_ROOT/scripts/check-readme-drift.sh"
+if [[ -x "$README_DRIFT_SCRIPT" ]]; then
+    DRIFT_OUTPUT=$("$README_DRIFT_SCRIPT" --quiet 2>/dev/null) || true
+    if [[ -n "$DRIFT_OUTPUT" ]]; then
+        ITEMS+=("README: $DRIFT_OUTPUT")
+    fi
+fi
+
+# --- 9. Pending learning exercises ---
 if [ "$CLAUDE_META_MODE" = "true" ] && [ -n "${CLAUDE_LEARNING_DIR:-}" ] && [ -d "${CLAUDE_LEARNING_DIR:-}" ]; then
     EXERCISE_FILE="$CLAUDE_LEARNING_DIR/exercises.md"
     if [ -f "$EXERCISE_FILE" ]; then

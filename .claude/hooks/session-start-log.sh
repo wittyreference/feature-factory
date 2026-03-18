@@ -137,6 +137,16 @@ if command -v chub >/dev/null 2>&1; then
     echo "Context Hub (chub) available for external API docs." >&2
 fi
 
+# 5b. direnv status check — if direnv is installed but .envrc not allowed,
+# the MCP server will get empty env vars and crash silently.
+if command -v direnv >/dev/null 2>&1 && [ -f "$PROJECT_ROOT/.envrc" ]; then
+    if ! direnv status 2>/dev/null | grep -q "Found RC allowed true"; then
+        echo "WARNING: direnv installed but .envrc not allowed. Run: direnv allow" >&2
+    fi
+elif ! command -v direnv >/dev/null 2>&1 && [ -f "$PROJECT_ROOT/.envrc" ]; then
+    echo "WARNING: direnv not installed. Shell env vars may override .env. Install: brew install direnv" >&2
+fi
+
 # 6. Codebase smoke test (syntax + deps, <200ms)
 SMOKE_FAILURES=""
 
@@ -244,6 +254,25 @@ if [ -n "$CONTEXT_LINES" ]; then
     printf "$CONTEXT_LINES" >&2
     echo "Use /recall <topic> to search accumulated knowledge." >&2
     echo "---" >&2
+fi
+
+# --- MEMORY.md auto-prune ---
+# Remove sections tagged with <!-- prune --> markers from previous wrap-up
+MEMORY_DIR="$HOME/.claude/projects/$(echo "$PROJECT_ROOT" | sed 's|/|-|g')/memory"
+MEMORY_FILE="$MEMORY_DIR/MEMORY.md"
+if [ -f "$MEMORY_FILE" ]; then
+    if grep -q '<!-- prune -->' "$MEMORY_FILE"; then
+        PRUNE_COUNT=$(grep -c '<!-- prune -->' "$MEMORY_FILE")
+        # Remove sections: from <!-- prune --> through its ## header and content, stopping at next ## heading
+        # Uses skip==0 instead of !skip for BSD awk (macOS) compatibility
+        awk '/<!-- prune -->/{skip=1;seen_header=0;next} /^## /{if(skip){if(seen_header){skip=0;print;next}else{seen_header=1;next}}} skip==0' "$MEMORY_FILE" > "${MEMORY_FILE}.tmp"
+        mv "${MEMORY_FILE}.tmp" "$MEMORY_FILE"
+        echo "MEMORY: Auto-pruned $PRUNE_COUNT stale entries from MEMORY.md" >&2
+    fi
+    MEMORY_LINES=$(wc -l < "$MEMORY_FILE" | tr -d ' ')
+    if [ "$MEMORY_LINES" -gt 100 ]; then
+        echo "MEMORY: ${MEMORY_LINES}/200 lines (entries after 200 are truncated). Run /wrap-up to review." >&2
+    fi
 fi
 
 # --- Reset Session Tracking ---

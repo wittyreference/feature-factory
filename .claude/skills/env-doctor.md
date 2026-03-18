@@ -1,3 +1,8 @@
+---
+name: env-doctor
+description: Diagnose shell and .env credential conflicts. Use when hitting auth errors, credential failures after switching projects, or mysterious environment variable issues.
+---
+
 # Environment Doctor
 
 Diagnose shell vs `.env` conflicts that cause mysterious auth failures. Run this when:

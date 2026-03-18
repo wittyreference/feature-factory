@@ -89,6 +89,79 @@ if echo "$COMMAND" | grep -qE "^git\s+commit"; then
         echo "" >&2
     fi
 
+    # ============================================
+    # LOCAL PATH LEAKAGE CHECK (BLOCKING)
+    # ============================================
+    # Block commits that ship hardcoded local directory paths.
+    # These break for anyone who clones the repo to a different location.
+    LOCAL_PATH_LEAKS=$(git diff --staged 2>/dev/null \
+        | grep '^+' | grep -v '^+++' \
+        | grep -En '/Users/[a-zA-Z0-9_.-]+/(workspaces|Desktop|Documents|Downloads|Library|Projects|repos|src|code|dev)/|/home/[a-zA-Z0-9_.-]+/(workspaces|Desktop|Documents|Downloads|Projects|repos|src|code|dev)/' \
+        || true)
+    if [ -n "$LOCAL_PATH_LEAKS" ]; then
+        echo "" >&2
+        echo "BLOCKED: Hardcoded local paths in staged changes" >&2
+        echo "" >&2
+        echo "These paths won't work for other users:" >&2
+        echo "$LOCAL_PATH_LEAKS" | head -10 >&2
+        echo "" >&2
+        echo "Use dynamic alternatives:" >&2
+        echo '  $HOME, $PROJECT_ROOT, $(git rev-parse --show-toplevel)' >&2
+        echo '  $(pwd), relative paths, or $(dirname "$0")' >&2
+        echo "" >&2
+        echo "Override: SKIP_PATH_CHECK=true git commit ..." >&2
+        echo "" >&2
+        if [ "${SKIP_PATH_CHECK:-}" != "true" ]; then
+            exit 2
+        fi
+    fi
+
+    # ============================================
+    # META-ONLY HOOK REGISTRATION CHECK (BLOCKING)
+    # ============================================
+    # Block commits that register meta-only scripts as shipped hooks.
+    # A meta-only script exits immediately when CLAUDE_META_MODE != true,
+    # meaning it does nothing for fresh-clone users — dead code in settings.json.
+    if git diff --staged --name-only 2>/dev/null | grep -qF '.claude/settings.json'; then
+        # Extract hook script filenames from added lines in the diff
+        NEW_HOOK_FILES=$(git diff --staged -- .claude/settings.json 2>/dev/null \
+            | grep '^+' | grep '\.sh"' \
+            | grep -oE '[a-zA-Z0-9_-]+\.sh' \
+            | sort -u)
+
+        if [ -n "$NEW_HOOK_FILES" ]; then
+            META_ONLY_HOOKS=""
+            for hook_file in $NEW_HOOK_FILES; do
+                # Resolve to full path (hooks live in .claude/hooks/)
+                hook_path="$PROJECT_ROOT/.claude/hooks/$hook_file"
+                [ -f "$hook_path" ] || continue
+
+                # Check first 20 lines for meta-mode-only guard:
+                #   if [ "$CLAUDE_META_MODE" != "true" ]; then exit 0; fi
+                if head -20 "$hook_path" | tr '\n' ' ' \
+                    | grep -qE 'CLAUDE_META_MODE.*!=.*true.*exit 0'; then
+                    META_ONLY_HOOKS="${META_ONLY_HOOKS}  -> ${hook_file} (exits when not in meta-mode)\n"
+                fi
+            done
+
+            if [ -n "$META_ONLY_HOOKS" ]; then
+                echo "" >&2
+                echo "BLOCKED: Meta-only script registered as a shipped hook" >&2
+                echo "" >&2
+                printf "%b" "$META_ONLY_HOOKS" >&2
+                echo "" >&2
+                echo "Scripts that exit 0 outside meta-mode do nothing for" >&2
+                echo "fresh-clone users. Don't register them in settings.json." >&2
+                echo "" >&2
+                echo "Override: SKIP_META_HOOK_CHECK=true git commit ..." >&2
+                echo "" >&2
+                if [ "${SKIP_META_HOOK_CHECK:-}" != "true" ]; then
+                    exit 2
+                fi
+            fi
+        fi
+    fi
+
     # Call the consolidated flywheel-doc-check (environment-aware)
     FLYWHEEL_HOOK="$SCRIPT_DIR/flywheel-doc-check.sh"
     if [ -x "$FLYWHEEL_HOOK" ]; then

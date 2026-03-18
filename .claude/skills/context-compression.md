@@ -1,3 +1,8 @@
+---
+name: context-compression
+description: Context management and compression techniques. Use when optimizing context window usage, managing large sessions, or applying compression strategies for development.
+---
+
 # Context Engineering
 
 Unified context management skill — fundamentals, compression techniques, and session optimization.

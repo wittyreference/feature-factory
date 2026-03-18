@@ -1,3 +1,8 @@
+---
+name: memory-systems
+description: State tracking and session memory management. Use when implementing cross-session persistence, managing application state, or designing memory patterns for development.
+---
+
 # Memory Systems for Feature Development
 
 This skill covers state tracking and memory management for development sessions.
