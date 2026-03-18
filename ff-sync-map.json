@@ -18,8 +18,17 @@
       {
         "source": "CLAUDE.md",
         "target": "CLAUDE.md",
-        "adaptations": ["strip-twilio-invariants", "strip-twilio-services", "generalize-paths", "generalize-language"],
-        "syncSections": ["Development Pipeline", "Session discipline", "Your Role as Primary Agent"],
+        "adaptations": [
+          "strip-twilio-invariants",
+          "strip-twilio-services",
+          "generalize-paths",
+          "generalize-language"
+        ],
+        "syncSections": [
+          "Development Pipeline",
+          "Session discipline",
+          "Your Role as Primary Agent"
+        ],
         "notes": "Only sync specific sections, not the whole file. Twilio-specific sections stay in twilio-overlay/claude-md-section.md"
       }
     ],
@@ -27,135 +36,216 @@
       {
         "source": ".claude/hooks/pre-write-validate.sh",
         "target": ".claude/hooks/pre-write-validate.sh",
-        "adaptations": ["strip-twilio-patterns", "use-config-reader", "generalize-paths"],
-        "syncSections": ["PIPELINE GATE", "CREDENTIAL SAFETY CHECK", "ABOUTME VALIDATION"],
+        "adaptations": [
+          "strip-twilio-patterns",
+          "use-config-reader",
+          "generalize-paths"
+        ],
+        "syncSections": [
+          "PIPELINE GATE",
+          "CREDENTIAL SAFETY CHECK",
+          "ABOUTME VALIDATION"
+        ],
         "notes": "Twilio credential patterns are hardcoded in source; feature-factory uses config-driven ff_credential_patterns()"
       },
       {
         "source": ".claude/hooks/pre-bash-validate.sh",
         "target": ".claude/hooks/pre-bash-validate.sh",
-        "adaptations": ["use-config-reader", "generalize-paths"],
-        "syncSections": ["DEPLOYMENT VALIDATION", "PRE-COMMIT DOCUMENTATION REMINDER"]
+        "adaptations": [
+          "use-config-reader",
+          "generalize-paths"
+        ],
+        "syncSections": [
+          "DEPLOYMENT VALIDATION",
+          "PRE-COMMIT DOCUMENTATION REMINDER"
+        ]
       },
       {
         "source": ".claude/hooks/post-write.sh",
         "target": ".claude/hooks/post-write.sh",
-        "adaptations": ["use-config-reader", "generalize-paths"],
-        "syncSections": ["SESSION FILE TRACKING", "AUTONOMOUS EVENT LOGGING"]
+        "adaptations": [
+          "use-config-reader",
+          "generalize-paths"
+        ],
+        "syncSections": [
+          "SESSION FILE TRACKING",
+          "AUTONOMOUS EVENT LOGGING"
+        ]
       },
       {
         "source": ".claude/hooks/flywheel-doc-check.sh",
         "target": ".claude/hooks/flywheel-doc-check.sh",
-        "adaptations": ["use-config-reader", "generalize-paths"],
-        "syncSections": ["COLLECT FILES FROM ALL THREE SOURCES"]
+        "adaptations": [
+          "use-config-reader",
+          "generalize-paths"
+        ],
+        "syncSections": [
+          "COLLECT FILES FROM ALL THREE SOURCES"
+        ]
       },
       {
         "source": ".claude/hooks/session-start-log.sh",
         "target": ".claude/hooks/session-start-log.sh",
-        "adaptations": ["use-config-reader"],
-        "syncSections": ["Session Bootstrap Checks"]
+        "adaptations": [
+          "use-config-reader"
+        ],
+        "syncSections": [
+          "Session Bootstrap Checks"
+        ]
       },
       {
         "source": ".claude/hooks/task-completed-check.sh",
         "target": ".claude/hooks/task-completed-check.sh",
-        "adaptations": ["strip-twilio-patterns", "use-config-reader"]
+        "adaptations": [
+          "strip-twilio-patterns",
+          "use-config-reader"
+        ]
       },
       {
         "source": ".claude/hooks/teammate-idle-check.sh",
         "target": ".claude/hooks/teammate-idle-check.sh",
-        "adaptations": ["use-config-reader"]
+        "adaptations": [
+          "use-config-reader"
+        ]
       },
       {
         "source": ".claude/hooks/post-bash.sh",
         "target": ".claude/hooks/post-bash.sh",
-        "adaptations": ["use-config-reader", "generalize-paths"]
+        "adaptations": [
+          "use-config-reader",
+          "generalize-paths"
+        ]
       },
       {
         "source": ".claude/hooks/session-checklist.sh",
         "target": ".claude/hooks/session-checklist.sh",
-        "adaptations": ["use-config-reader", "generalize-language"]
+        "adaptations": [
+          "use-config-reader",
+          "generalize-language"
+        ]
       },
       {
         "source": ".claude/hooks/subagent-log.sh",
         "target": ".claude/hooks/subagent-log.sh",
-        "adaptations": ["use-config-reader"]
+        "adaptations": [
+          "use-config-reader"
+        ]
       },
       {
         "source": ".claude/hooks/notify-ready.sh",
         "target": ".claude/hooks/notify-ready.sh",
-        "adaptations": ["use-config-reader"]
+        "adaptations": [
+          "use-config-reader"
+        ]
       }
     ],
     "commands": [
       {
         "source": ".claude/commands/architect.md",
         "target": ".claude/commands/architect.md",
-        "adaptations": ["strip-twilio-services", "generalize-patterns"]
+        "adaptations": [
+          "strip-twilio-services",
+          "generalize-patterns"
+        ]
       },
       {
         "source": ".claude/commands/spec.md",
         "target": ".claude/commands/spec.md",
-        "adaptations": ["strip-twilio-services", "generalize-language"]
+        "adaptations": [
+          "strip-twilio-services",
+          "generalize-language"
+        ]
       },
       {
         "source": ".claude/commands/dev.md",
         "target": ".claude/commands/dev.md",
-        "adaptations": ["strip-twilio-examples", "generalize-patterns"]
+        "adaptations": [
+          "strip-twilio-examples",
+          "generalize-patterns"
+        ]
       },
       {
         "source": ".claude/commands/review.md",
         "target": ".claude/commands/review.md",
-        "adaptations": ["strip-twilio-services", "generalize-language"]
+        "adaptations": [
+          "strip-twilio-services",
+          "generalize-language"
+        ]
       },
       {
         "source": ".claude/commands/orchestrate.md",
         "target": ".claude/commands/orchestrate.md",
-        "adaptations": ["generalize-language"]
+        "adaptations": [
+          "generalize-language"
+        ]
       },
       {
         "source": ".claude/commands/team.md",
         "target": ".claude/commands/team.md",
-        "adaptations": ["strip-twilio-services", "generalize-language"]
+        "adaptations": [
+          "strip-twilio-services",
+          "generalize-language"
+        ]
       },
       {
         "source": ".claude/commands/commit.md",
         "target": ".claude/commands/commit.md",
-        "adaptations": ["generalize-paths"]
+        "adaptations": [
+          "generalize-paths"
+        ]
       },
       {
         "source": ".claude/commands/context.md",
         "target": ".claude/commands/context.md",
-        "adaptations": ["strip-twilio-services", "generalize-language"]
+        "adaptations": [
+          "strip-twilio-services",
+          "generalize-language"
+        ]
       },
       {
         "source": ".claude/commands/wrap-up.md",
         "target": ".claude/commands/wrap-up.md",
-        "adaptations": ["strip-twilio-services", "generalize-paths"]
+        "adaptations": [
+          "strip-twilio-services",
+          "generalize-paths"
+        ]
       },
       {
         "source": ".claude/commands/docs.md",
         "target": ".claude/commands/docs.md",
-        "adaptations": ["strip-twilio-services", "generalize-language"]
+        "adaptations": [
+          "strip-twilio-services",
+          "generalize-language"
+        ]
       },
       {
         "source": ".claude/commands/push.md",
         "target": ".claude/commands/push.md",
-        "adaptations": ["generalize-paths"]
+        "adaptations": [
+          "generalize-paths"
+        ]
       },
       {
         "source": ".claude/commands/test-gen.md",
         "target": ".claude/commands/test-gen.md",
-        "adaptations": ["strip-twilio-examples", "generalize-patterns"]
+        "adaptations": [
+          "strip-twilio-examples",
+          "generalize-patterns"
+        ]
       },
       {
         "source": ".claude/commands/test.md",
         "target": ".claude/commands/test.md",
-        "adaptations": ["generalize-language"]
+        "adaptations": [
+          "generalize-language"
+        ]
       },
       {
         "source": ".claude/commands/learn.md",
         "target": ".claude/commands/learn.md",
-        "adaptations": ["generalize-language"]
+        "adaptations": [
+          "generalize-language"
+        ]
       },
       {
         "source": ".claude/commands/check-updates.md",
@@ -165,105 +255,153 @@
       {
         "source": ".claude/commands/prototype.md",
         "target": ".claude/commands/prototype.md",
-        "adaptations": ["generalize-language"]
+        "adaptations": [
+          "generalize-language"
+        ]
       },
       {
         "source": ".claude/commands/recall.md",
         "target": ".claude/commands/recall.md",
         "adaptations": []
+      },
+      {
+        "source": ".claude/commands/uber-review.md",
+        "target": ".claude/commands/uber-review.md",
+        "adaptations": [
+          "strip-twilio-services",
+          "generalize-language"
+        ]
       }
     ],
     "skills": [
       {
         "source": ".claude/skills/tdd-workflow.md",
         "target": ".claude/skills/tdd-workflow.md",
-        "adaptations": ["strip-twilio-examples"]
+        "adaptations": [
+          "strip-twilio-examples"
+        ]
       },
       {
         "source": ".claude/skills/context-engineering.md",
         "target": ".claude/skills/context-compression.md",
-        "adaptations": ["strip-twilio-examples"],
+        "adaptations": [
+          "strip-twilio-examples"
+        ],
         "notes": "Factory consolidated context-compression + context-fundamentals into context-engineering. FF keeps context-compression.md as filename."
       },
       {
         "source": ".claude/skills/memory-systems.md",
         "target": ".claude/skills/memory-systems.md",
-        "adaptations": ["strip-twilio-examples"]
+        "adaptations": [
+          "strip-twilio-examples"
+        ]
       },
       {
         "source": ".claude/skills/autonomous-guide.md",
         "target": ".claude/skills/autonomous-guide.md",
-        "adaptations": ["strip-twilio-services"]
+        "adaptations": [
+          "strip-twilio-services"
+        ]
       },
       {
         "source": ".claude/skills/doc-flywheel.md",
         "target": ".claude/skills/doc-flywheel.md",
-        "adaptations": ["generalize-language"]
+        "adaptations": [
+          "generalize-language"
+        ]
       },
       {
         "source": ".claude/skills/hooks-reference.md",
         "target": ".claude/skills/hooks-reference.md",
-        "adaptations": ["strip-twilio-patterns", "generalize-language"]
+        "adaptations": [
+          "strip-twilio-patterns",
+          "generalize-language"
+        ]
       },
       {
         "source": ".claude/skills/multi-agent-patterns.md",
         "target": ".claude/skills/multi-agent-patterns.md",
-        "adaptations": ["strip-twilio-services", "generalize-language"]
+        "adaptations": [
+          "strip-twilio-services",
+          "generalize-language"
+        ]
       },
       {
         "source": ".claude/skills/agent-teams-guide.md",
         "target": ".claude/skills/agent-teams-guide.md",
-        "adaptations": ["strip-twilio-services", "generalize-language"]
+        "adaptations": [
+          "strip-twilio-services",
+          "generalize-language"
+        ]
       },
       {
         "source": ".claude/skills/env-doctor.md",
         "target": ".claude/skills/env-doctor.md",
-        "adaptations": ["strip-twilio-patterns", "generalize-language"]
+        "adaptations": [
+          "strip-twilio-patterns",
+          "generalize-language"
+        ]
       },
       {
         "source": ".claude/skills/context-hub.md",
         "target": ".claude/skills/context-hub.md",
-        "adaptations": ["generalize-language"]
+        "adaptations": [
+          "generalize-language"
+        ]
       }
     ],
     "workflows": [
       {
         "source": ".claude/workflows/README.md",
         "target": ".claude/workflows/README.md",
-        "adaptations": ["strip-twilio-services", "generalize-language"]
+        "adaptations": [
+          "strip-twilio-services",
+          "generalize-language"
+        ]
       }
     ],
     "rules": [
       {
         "source": ".claude/rules/tools-architecture.md",
         "target": ".claude/rules/tools-architecture.md",
-        "adaptations": ["strip-twilio-services", "generalize-language"]
+        "adaptations": [
+          "strip-twilio-services",
+          "generalize-language"
+        ]
       }
     ],
     "scripts": [
       {
         "source": "scripts/env-doctor.sh",
         "target": "scripts/env-doctor.sh",
-        "adaptations": ["generalize-patterns"],
+        "adaptations": [
+          "generalize-patterns"
+        ],
         "notes": "FF version is config-driven (reads criticalVars/dangerousVars from ff.config.json)"
       },
       {
         "source": ".envrc",
         "target": "scripts/envrc.template",
         "adaptations": [],
-        "notes": "Generic template — users customize unset list for their platform"
+        "notes": "Generic template \u2014 users customize unset list for their platform"
       }
     ],
     "references": [
       {
         "source": ".claude/references/doc-map.md",
         "target": ".claude/references/doc-map.md",
-        "adaptations": ["strip-twilio-services", "generalize-paths"]
+        "adaptations": [
+          "strip-twilio-services",
+          "generalize-paths"
+        ]
       },
       {
         "source": ".claude/references/hook-troubleshooting.md",
         "target": ".claude/references/hook-troubleshooting.md",
-        "adaptations": ["strip-twilio-patterns", "generalize-language"]
+        "adaptations": [
+          "strip-twilio-patterns",
+          "generalize-language"
+        ]
       }
     ]
   },
@@ -296,7 +434,8 @@
       ".claude/references/operational-gotchas.md",
       ".claude/references/tool-boundaries.md",
       ".claude/references/brainstorm.md",
-      ".claude/references/doc-navigator.md"
+      ".claude/references/doc-navigator.md",
+      ".claude/references/mc-writing-style-guide-shareable.md"
     ],
     "meta-only-hooks": [
       ".claude/hooks/_meta-mode.sh",
