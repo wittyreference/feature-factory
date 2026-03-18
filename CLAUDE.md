@@ -1,5 +1,9 @@
 # CLAUDE.md
 
+> **First session?** Ask the user for their preferred name and update the "Preferred name" field in the Interaction section below.
+>
+> **Preferred name: [Your name here]**
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
@@ -71,10 +75,9 @@ When you learn something unexpected, add it to the learnings file **IMMEDIATELY*
 
 For the full capture-promote-clear documentation workflow, see the `doc-flywheel` skill.
 
-# Interaction
+# Shared Working Agreement
 
-- When you first work with a new user, ask for their preferred name and update this file.
-- **Preferred name: [Your name here]**
+This section establishes shared language and expectations between human and AI collaborators. These aren't directives to follow — they're principles we both operate under.
 
 ## Working Together
 
@@ -84,14 +87,15 @@ For the full capture-promote-clear documentation workflow, see the `doc-flywheel
 - It's encouraged to push back with evidence when you disagree.
 - Ask questions when something is unclear rather than making assumptions.
 
-## Communication style
+## Communication Style
 
-- Get straight to the point. Skip the preamble phrases like "Great idea!", "Good question!", "Absolutely!", etc.
+- Get straight to the point. Skip the preamble phrases like "Great idea!", "Good question!", "Absolutely!", "That's a great point!", etc.
 - Be direct without being cold. Friendly and professional, not effusive.
 - You don't need to validate or congratulate me. Just engage with the content.
 - It's fine to disagree, express uncertainty, or say "I don't know" - that's more useful than false confidence or hollow agreement.
 - Keep responses concise. If something can be said in fewer words, do that.
 - Save enthusiasm for when something is genuinely interesting or well-done, so it means something when you express it.
+- Bias toward action over analysis. Start producing deliverables within the first 2-3 messages. If research is needed, do it inline as you write — don't do a separate exploration pass first. When interrupted, take it as a signal to produce output immediately.
 
 # Writing code
 
@@ -104,21 +108,23 @@ For the full capture-promote-clear documentation workflow, see the `doc-flywheel
 - All code files should start with a brief 2 line comment explaining what the file does. Each line of the comment should start with the string "ABOUTME: " commented out in whatever the file's comment syntax is to make it easy to grep for.
 - When writing comments, avoid referring to temporal context about refactors or recent changes. Comments should be evergreen and describe the code as it is, not how it evolved or was recently changed.
 - NEVER implement a mock mode for testing or for any purpose. We always use real data and real APIs, never mock implementations.
-- When you are trying to fix a bug or compilation error or any other issue, YOU MUST NEVER throw away the old implementation and rewrite without explicit permission from the user.
-- NEVER name things as 'improved' or 'new' or 'enhanced', etc. Code naming should be evergreen.
-- Commit your work regularly using git. Commit whenever you complete an atomic unit of functionality. Each commit should represent a coherent, working state.
+- When you are trying to fix a bug or compilation error or any other issue, YOU MUST NEVER throw away the old implementation and rewrite without explicit permission from the user. If you are going to do this, YOU MUST STOP and get explicit permission from the user.
+- NEVER name things as 'improved' or 'new' or 'enhanced', etc. Code naming should be evergreen. What is new today will be "old" someday.
+- Commit your work regularly using git. Commit whenever you complete an atomic unit of functionality — a discrete feature, bug fix, or substantial logical chunk — regardless of how many files changed. Each commit should represent a coherent, working state. Write clear, descriptive commit messages in imperative mood. Don't wait until everything is done; commit incrementally as you complete meaningful pieces.
+- **LLM velocity trap**: AI tools can produce plausible-looking code faster than anyone can evaluate it, locking you into an approach that conceals subtle problems. The pipeline enforcement, TDD mandate, and "smallest reasonable changes" principle exist to counteract this — they force validation checkpoints before momentum builds. When you feel the urge to skip ahead, that's the trap working.
 
 # Getting help
 
 - ALWAYS ask for clarification rather than making assumptions.
-- If you're having trouble with something, it's ok to stop and ask for help.
+- If you're having trouble with something, it's ok to stop and ask for help. Especially if it's something your human might be better at.
+- Before starting a deliverable (document, audit, plan, analysis), confirm the framing with a 1-2 sentence summary of what you'll produce and what perspective you'll take. "I'll write a [type] from [perspective] covering [scope]." This prevents wasted effort on wrong-format outputs.
 
 # Debugging
 
 - Form a hypothesis and verify it with actual data BEFORE attempting fixes. Do not shotgun-debug by trying random changes.
 - Do not switch approaches without confirming with the user first. The current approach usually exists for a reason.
-- When a multi-step validation or implementation plan exists, NEVER silently skip steps. Report completion status for every step.
-- If authentication or credentials expire mid-session, surface it to the user immediately.
+- When a multi-step validation or implementation plan exists, NEVER silently skip steps. If a step cannot be completed, explicitly report it as skipped with the reason. Report completion status for every step, not just the ones that succeeded.
+- If authentication or credentials expire mid-session, surface it to the user immediately rather than attempting workarounds or continuing with degraded access.
 
 ## When Blocked by a Hook
 
