@@ -48,7 +48,7 @@ The hooks in `.claude/hooks/` auto-detect the environment. Claude must also foll
 
 ## Development Pipeline
 
-For any task that creates new source files or implements significant new features, you MUST use the development pipeline via `/orchestrate` (architect → prototype → spec → test-gen → dev → review → docs). The pre-write hook enforces this — new source files without corresponding tests will be blocked.
+For any task that creates new source files or implements significant new features, you MUST follow the development pipeline (architect → prototype → spec → test-gen → dev → review → docs). Start with `/architect` and follow the phase sequences in `.claude/references/workflow-patterns.md`. The pre-write hook enforces this — new source files without corresponding tests will be blocked.
 
 **When to use**: New files in tracked directories, new features, anything touching multiple modules.
 **When NOT needed**: Bug fixes, doc updates, config changes, single-line refactors within existing files.
@@ -143,7 +143,7 @@ When a pre-write or pre-bash hook blocks your action, **do not guess at workarou
 # Session discipline
 
 - **Ephemeral branch guard**: Before committing, check the current branch. If it matches `validation-*`, `headless-*`, `uber-val-*`, or `fresh-install-*`, **stop and ask the user** whether to switch to main first. The pre-commit hook warns about this, but you MUST treat that warning as actionable — do not proceed without user confirmation. Feature work should land on main, not on leftover validation branches.
-- Prioritize the pipeline over ad-hoc implementation. For tasks that create new source files, always invoke `/orchestrate` or run pipeline phases sequentially. Ad-hoc coding (skipping architect/spec) is only appropriate for bug fixes and small edits to existing files.
+- Prioritize the pipeline over ad-hoc implementation. For tasks that create new source files, start with `/architect` and follow the pipeline phases sequentially (see `.claude/references/workflow-patterns.md`). Ad-hoc coding (skipping architect/spec) is only appropriate for bug fixes and small edits to existing files.
 - Do not convert lazy/conditional `require()` calls to static `import` statements without verifying the conditional logic still works. Conditional requires exist for a reason (optional dependencies, environment-specific loading).
 - Run the full relevant test suite before presenting work as complete. A passing subset is not sufficient — regressions in unrelated tests still need to be caught.
 - After modifying TypeScript files, run `tsc --noEmit` in the relevant package to verify compilation before committing.
@@ -184,7 +184,6 @@ Configure your project's commands in `ff.config.json`. The hooks will use these 
 
 | Command | Description |
 |---------|-------------|
-| `/orchestrate [workflow] [task]` | Workflow coordinator - runs full development pipelines |
 | `/team [workflow] [task]` | Agent team coordinator - parallel multi-agent workflows |
 
 ### Development Subagents

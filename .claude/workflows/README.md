@@ -6,8 +6,7 @@ This document describes the available workflow patterns for developing features 
 
 | Command | Role | Description |
 |---------|------|-------------|
-| `/orchestrate` | Workflow Coordinator | Runs full development pipelines automatically |
-| `/architect` | Architect | Design review, pattern selection, unknowns identification |
+| `/architect` | Architect | Design review, pattern selection, unknowns identification — pipeline entry point |
 | `/prototype` | Prototyper | Quick spike to test unknowns -- no tests, produces learnings |
 | `/spec` | Specification Writer | Creates detailed technical specifications |
 | `/test-gen` | Test Generator | TDD Red Phase - writes failing tests first |
@@ -26,7 +25,7 @@ Full development pipeline for building new functionality:
 /architect ──► /prototype (if unknowns) ──► /spec ──► /test-gen ──► /dev ──► /review ──► /test ──► /docs
 ```
 
-**Orchestrated**: `/orchestrate new-feature [description]`
+**Start with**: `/architect [feature]`
 
 **Manual execution**:
 
@@ -47,7 +46,7 @@ Quick fix pipeline for resolving issues:
 /architect ──► /test-gen ──► /dev ──► /review ──► /test
 ```
 
-**Orchestrated**: `/orchestrate bug-fix [issue]`
+**Start with**: Analyze logs to identify the issue
 
 **Manual execution**:
 
@@ -65,7 +64,7 @@ Improve code structure without changing behavior:
 /test ──► /architect ──► /dev ──► /review ──► /test
 ```
 
-**Orchestrated**: `/orchestrate refactor [target]`
+**Start with**: `/test` to establish baseline
 
 **Manual execution**:
 
@@ -83,7 +82,7 @@ Update documentation without code changes:
 /docs
 ```
 
-**Orchestrated**: `/orchestrate docs-only [scope]`
+**Start with**: `/docs [scope]`
 
 **Manual execution**:
 
@@ -97,7 +96,7 @@ Review code for security issues:
 /review ──► /dev ──► /test
 ```
 
-**Orchestrated**: `/orchestrate security-audit [scope]`
+**Start with**: `/review security [scope]`
 
 **Manual execution**:
 
@@ -107,11 +106,11 @@ Review code for security issues:
 
 ## Agent Team Workflows
 
-For tasks that benefit from parallel work or inter-agent discussion, use `/team` instead of `/orchestrate`. Agent teams spawn multiple Claude Code instances that communicate via messaging and a shared task list.
+For tasks that benefit from parallel work or inter-agent discussion, use `/team`. Agent teams spawn multiple Claude Code instances that communicate via messaging and a shared task list.
 
 ### When to Use Teams vs Subagents
 
-| Criteria | Use Subagents (`/orchestrate`) | Use Teams (`/team`) |
+| Criteria | Use Sequential Phases | Use Teams (`/team`) |
 |----------|-------------------------------|---------------------|
 | Task structure | Sequential, clear phases | Parallel or adversarial |
 | Communication | Results flow one direction | Agents discuss findings |
@@ -180,18 +179,13 @@ Run with: `/team validation [scope]`
 
 Multiple validators run simultaneously, each focused on one domain or component. Lead synthesizes findings into a unified pass/fail report. Use after deployments or workflow completions to verify multiple areas in parallel.
 
-## Standalone vs Orchestrated vs Team-Based
+## Sequential vs Team-Based
 
 All subagents work independently. Choose the approach that fits your workflow:
 
-### Orchestrated Mode
+### Sequential Mode
 
-Use `/orchestrate` when:
-
-- Building a complete new feature with sequential phases
-- Following a standard workflow pattern
-- Want automated sequencing and handoffs
-- Working on a well-defined task
+Start with `/architect` and follow the phase sequence for your workflow type (see above). Claude Code handles sequencing, context handoff, and state tracking natively.
 
 ### Team-Based Mode
 

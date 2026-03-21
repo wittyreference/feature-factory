@@ -64,8 +64,8 @@ A central coordinator manages the workflow, invoking specialists in sequence.
 
 ```
                     +-------------+
-                    | Orchestrator|
-                    | /orchestrate|
+                    |  Claude Code |
+                    |  (sequencer) |
                     +------+------+
                            |
      +---------+-----------+-----------+---------+
@@ -84,7 +84,7 @@ A central coordinator manages the workflow, invoking specialists in sequence.
 ### Example: New API Feature
 
 ```
-/orchestrate new-feature "Add user registration"
+/architect "Add user registration"
 
 Phase 1: /architect
   -> Design: src/handlers/register.js
@@ -398,8 +398,8 @@ Teammates are subject to `TeammateIdle` and `TaskCompleted` hooks:
 
 ```
 Is work sequential with clear phases?
-+-- Yes -> Orchestrator Pattern
-|         Use /orchestrate command
++-- Yes -> Sequential Pipeline
+|         Start with /architect, follow phase sequence
 |
 +-- No -> Do agents need to discuss findings?
          +-- Yes -> Agent Teams Pattern

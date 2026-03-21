@@ -589,7 +589,7 @@ if [ -f "$TARGET_DIR/CLAUDE.md" ] && [ "$FORCE" = false ]; then
             echo "| \`/test\` | Run and validate test suites |" >> "$TARGET_DIR/CLAUDE.md"
             echo "| \`/docs\` | Documentation updates |" >> "$TARGET_DIR/CLAUDE.md"
             echo "| \`/commit\` | Git commit with validation |" >> "$TARGET_DIR/CLAUDE.md"
-            echo "| \`/orchestrate\` | Sequential development pipeline |" >> "$TARGET_DIR/CLAUDE.md"
+            echo "| \`/architect\` | Pipeline entry point — design review, then follow phases |" >> "$TARGET_DIR/CLAUDE.md"
             echo "| \`/team\` | Parallel multi-agent workflows |" >> "$TARGET_DIR/CLAUDE.md"
             echo "| \`/learn\` | Learning exercises from autonomous work |" >> "$TARGET_DIR/CLAUDE.md"
             echo -e "  ${GREEN}✓${NC} CLAUDE.md (appended Feature Factory section)"

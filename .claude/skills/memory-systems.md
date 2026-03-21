@@ -167,7 +167,7 @@ Hook runs -> pending-actions.md -> Agent reads -> Takes action -> Clears file
 
 ### Workflow State Tracking
 
-For orchestrated workflows, track phase completion:
+For multi-phase pipeline workflows, track phase completion:
 
 ```markdown
 ## Workflow: new-feature "User Registration"

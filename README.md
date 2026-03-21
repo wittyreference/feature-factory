@@ -57,11 +57,11 @@ Commands are specialized subagent roles invoked with `/command-name`.
 | `/test` | Runs full test suite, validates coverage, reports gaps |
 | `/docs` | Documentation updates, ABOUTME audit, CLAUDE.md maintenance |
 
-**Orchestration:**
+**Coordination:**
 
 | Command | Role |
 |---------|------|
-| `/orchestrate` | Sequential pipeline coordinator (new-feature, bug-fix, refactor, docs-only, security-audit) |
+| `/architect` | Pipeline entry point — design review, then Claude guides you through subsequent phases |
 | `/team` | Parallel multi-agent workflows (competing investigators, multi-lens review) |
 
 **Utilities:**
@@ -297,7 +297,7 @@ Remove `.meta/` to return to standard mode.
 
 ### Learning Exercises
 
-When Claude works autonomously (headless mode, `/orchestrate`, `/team`), you get clean artifacts but miss the decision-making. The learning system bridges that gap:
+When Claude works autonomously (headless mode, `/team`), you get clean artifacts but miss the decision-making. The learning system bridges that gap:
 
 1. Hooks log file creation/modification events during autonomous work
 2. `generate-learning-exercises.sh` creates structured exercises from those events

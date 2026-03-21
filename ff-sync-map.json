@@ -173,13 +173,6 @@
         ]
       },
       {
-        "source": ".claude/commands/orchestrate.md",
-        "target": ".claude/commands/orchestrate.md",
-        "adaptations": [
-          "generalize-language"
-        ]
-      },
-      {
         "source": ".claude/commands/team.md",
         "target": ".claude/commands/team.md",
         "adaptations": [
