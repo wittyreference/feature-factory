@@ -734,13 +734,37 @@ if [ -n "$OVERLAY_DIR" ]; then
             fi
         fi
 
-        # Copy overlay CLAUDE.md sections if present
+        # Copy domain docs (recursive, preserving directory structure)
+        if [ -d "$OVERLAY_DIR/domain-docs" ]; then
+            echo "  Installing domain documentation..."
+            DOC_COUNT=0
+            while IFS= read -r doc_file; do
+                [ -z "$doc_file" ] && continue
+                # Strip the domain-docs/ prefix to get the relative target path
+                REL_PATH="${doc_file#$OVERLAY_DIR/domain-docs/}"
+                copy_file "$doc_file" "$TARGET_DIR/$REL_PATH"
+                DOC_COUNT=$((DOC_COUNT + 1))
+            done < <(find "$OVERLAY_DIR/domain-docs" -type f -name "*.md" 2>/dev/null)
+            if [ "$DOC_COUNT" -gt 0 ]; then
+                echo -e "  ${GREEN}✓${NC} $DOC_COUNT domain doc(s) installed"
+            fi
+        fi
+
+        # Append overlay CLAUDE.md section (idempotent — checks for marker before appending)
         if [ -f "$OVERLAY_DIR/claude-md-section.md" ]; then
             echo "  Appending platform section to CLAUDE.md..."
+            # Extract first heading from the section file for idempotency check
+            SECTION_MARKER=$(grep -m1 '^#' "$OVERLAY_DIR/claude-md-section.md" 2>/dev/null || echo "")
             if [ "$DRY_RUN" = false ]; then
-                echo "" >> "$TARGET_DIR/CLAUDE.md"
-                cat "$OVERLAY_DIR/claude-md-section.md" >> "$TARGET_DIR/CLAUDE.md"
-                echo -e "  ${GREEN}✓${NC} CLAUDE.md (platform section appended)"
+                if [ -n "$SECTION_MARKER" ] && grep -qF "$SECTION_MARKER" "$TARGET_DIR/CLAUDE.md" 2>/dev/null; then
+                    echo -e "  ${YELLOW}skip${NC} CLAUDE.md (platform section already present)"
+                else
+                    echo "" >> "$TARGET_DIR/CLAUDE.md"
+                    cat "$OVERLAY_DIR/claude-md-section.md" >> "$TARGET_DIR/CLAUDE.md"
+                    echo -e "  ${GREEN}✓${NC} CLAUDE.md (platform section appended)"
+                fi
+            else
+                echo -e "  ${BLUE}[dry-run]${NC} Would append platform section to CLAUDE.md"
             fi
         fi
     fi
@@ -754,14 +778,24 @@ fi
 echo -e "${GREEN}Feature Factory installed successfully!${NC}"
 echo ""
 echo "What was installed:"
-echo "  .claude/hooks/     - 16 event-driven quality gate hooks"
-echo "  .claude/commands/  - 14 slash commands (/architect, /dev, /test-gen, etc.)"
-echo "  .claude/skills/    - 9 knowledge documents (TDD, context, patterns)"
+echo "  .claude/hooks/     - Event-driven quality gate hooks"
+echo "  .claude/commands/  - Slash commands (/architect, /dev, /test-gen, etc.)"
+echo "  .claude/skills/    - Knowledge documents (TDD, context, patterns)"
 echo "  .claude/settings.json - Hook registrations"
 echo "  ff.config.json     - Project configuration (edit this!)"
 echo "  CLAUDE.md          - Root documentation"
 if [ "$NO_META" = false ]; then
 echo "  .meta/             - Meta-development state (gitignored)"
+fi
+if [ -n "$OVERLAY_DIR" ] && [ -d "$OVERLAY_DIR" ]; then
+echo ""
+echo "Overlay applied from: $OVERLAY_DIR"
+[ -d "$OVERLAY_DIR/commands" ] && echo "  + Platform commands"
+[ -d "$OVERLAY_DIR/skills" ] && echo "  + Platform skills"
+[ -d "$OVERLAY_DIR/references" ] && echo "  + Platform references"
+[ -d "$OVERLAY_DIR/domain-docs" ] && echo "  + Domain documentation"
+[ -f "$OVERLAY_DIR/ff.config.overlay.json" ] && echo "  + Config merged (credential patterns, env vars, deploy command)"
+[ -f "$OVERLAY_DIR/claude-md-section.md" ] && echo "  + CLAUDE.md platform section"
 fi
 echo ""
 echo "Next steps:"
