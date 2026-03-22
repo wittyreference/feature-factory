@@ -8,20 +8,16 @@ survive model improvements better, and workarounds should be revisited with each
 
 ## Prerequisites
 
-- `scripts/score-validation.sh` and `scripts/validation-trend.sh` available
-- Scores baseline from previous model in `.meta/validation-reports/state/scores.jsonl`
+- Scores baseline from previous model available
 
 ## 1. Baseline current state
 
 - [ ] Record current model name and date
-- [ ] Run full validation suite with scoring:
-  ```bash
-  ./scripts/validate-provisioning.sh --score
-  ./scripts/run-validation-suite.sh --score
-  ```
+- [ ] Run full test suite
 - [ ] Count instruction file weight:
   ```bash
-  wc -l CLAUDE.md .claude/rules/*.md functions/*/CLAUDE.md agents/mcp-servers/twilio/CLAUDE.md
+  find . -name "CLAUDE.md" -not -path "*/node_modules/*" | xargs wc -l
+  wc -l .claude/rules/*.md
   ```
 - [ ] Count emphasis markers:
   ```bash
@@ -51,7 +47,7 @@ task, score the output. Only remove rules where the new model consistently handl
 ## 3. Run validation suite on new model
 
 - [ ] Run the same validation suite as step 1
-- [ ] Compare scores: `./scripts/validation-trend.sh --summary`
+- [ ] Compare scores against baseline
 - [ ] Flag regressions (new model should score >= previous)
 - [ ] If regressions found, investigate before proceeding
 
@@ -75,5 +71,4 @@ Based on steps 2-4, make changes:
 ## 6. Record results
 
 - [ ] Log in learnings: what changed, what stayed, why
-- [ ] Update `scores.jsonl` with post-change validation run
 - [ ] Note the instruction weight reduction (line count before/after)

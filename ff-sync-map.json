@@ -436,7 +436,9 @@
       {
         "source": ".claude/references/model-bump-checklist.md",
         "target": ".claude/references/model-bump-checklist.md",
-        "adaptations": [],
+        "adaptations": [
+          "generalize-paths"
+        ],
         "notes": "Systematic model capability assessment — no platform-specific content"
       }
     ]
