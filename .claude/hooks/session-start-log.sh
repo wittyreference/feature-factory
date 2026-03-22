@@ -34,6 +34,11 @@ TIMESTAMP=$(date -Iseconds)
 # Log every SessionStart event (this is the diagnostic value)
 echo "SessionStart: source=$SOURCE session=$SESSION_ID model=$MODEL timestamp=$TIMESTAMP" >> "$LOGS_DIR/session-events.log"
 
+# Structured event emission (observability)
+source "$HOOK_DIR/_emit-event.sh"
+EMIT_SESSION_ID="$SESSION_ID"
+emit_event "session_start" "$(jq -nc --arg src "$SOURCE" --arg mdl "$MODEL" '{source: $src, model: $mdl}')"
+
 # For compaction-like events, attempt to extract the compaction summary
 if [ "$SOURCE" = "compact" ] || [ "$SOURCE" = "clear" ] || [ "$SOURCE" = "plan" ]; then
     if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
@@ -67,9 +72,21 @@ else
     SESSION_DIR="$PROJECT_ROOT/.claude"
 fi
 
-# 1. Stale session check (BEFORE reset — checks the OLD timestamp)
-if [ -f "$SESSION_DIR/.session-start" ]; then
-    PREV_START=$(cat "$SESSION_DIR/.session-start" 2>/dev/null)
+# Session-scoped state directory (isolates per-session files for concurrent sessions)
+SESSIONS_DIR="$SESSION_DIR/.sessions"
+mkdir -p "$SESSIONS_DIR"
+
+# Cleanup stale per-session files (older than 48h)
+find "$SESSIONS_DIR" -type f -mmin +2880 -delete 2>/dev/null || true
+
+# 1. Stale session check (BEFORE reset — checks THIS session's previous timestamp)
+PREV_START_FILE="$SESSIONS_DIR/${SESSION_ID}.start"
+# Fall back to legacy shared file if per-session file doesn't exist
+if [ ! -f "$PREV_START_FILE" ] && [ -f "$SESSION_DIR/.session-start" ]; then
+    PREV_START_FILE="$SESSION_DIR/.session-start"
+fi
+if [ -f "$PREV_START_FILE" ]; then
+    PREV_START=$(cat "$PREV_START_FILE" 2>/dev/null)
     NOW=$(date +%s)
     if [ -n "$PREV_START" ] && [ "$PREV_START" -gt 0 ] 2>/dev/null; then
         AGE_HOURS=$(( (NOW - PREV_START) / 3600 ))
@@ -276,10 +293,12 @@ if [ -f "$MEMORY_FILE" ]; then
 fi
 
 # --- Reset Session Tracking ---
-# Reset session-start timestamp for the flywheel
-date +%s > "$SESSION_DIR/.session-start"
+# Write to per-session state files (concurrent session support)
+date +%s > "$SESSIONS_DIR/${SESSION_ID}.start"
+rm -f "$SESSIONS_DIR/${SESSION_ID}.files"
 
-# Clear session-files tracking (new session = new file list)
+# Also write legacy shared files for backward compat (wrap-up, tests)
+date +%s > "$SESSION_DIR/.session-start"
 rm -f "$SESSION_DIR/.session-files"
 
 exit 0

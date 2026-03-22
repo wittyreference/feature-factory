@@ -17,6 +17,11 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/_meta-mode.sh"
 
+# Source config reader
+if [ -f "$SCRIPT_DIR/_config-reader.sh" ]; then
+    source "$SCRIPT_DIR/_config-reader.sh"
+fi
+
 # Log agent completion with type info if available
 if [ -n "$HOOK_INPUT" ] && command -v jq &>/dev/null; then
     AGENT_TYPE=$(echo "$HOOK_INPUT" | jq -r '.agent_type // "unknown"' 2>/dev/null)
@@ -24,6 +29,17 @@ if [ -n "$HOOK_INPUT" ] && command -v jq &>/dev/null; then
     if [ "$AGENT_TYPE" != "unknown" ] && [ "$AGENT_TYPE" != "null" ]; then
         echo "Subagent completed: type=$AGENT_TYPE id=${AGENT_ID:0:8}" >&2
     fi
+fi
+
+# Structured event emission (observability)
+if [ -n "$HOOK_INPUT" ] && command -v jq &>/dev/null; then
+    SUBAGENT_SESSION_ID=$(echo "$HOOK_INPUT" | jq -r '.session_id // ""' 2>/dev/null)
+    source "$SCRIPT_DIR/_emit-event.sh"
+    EMIT_SESSION_ID="$SUBAGENT_SESSION_ID"
+    emit_event "subagent_complete" "$(jq -nc \
+        --arg type "${AGENT_TYPE:-unknown}" \
+        --arg aid "${AGENT_ID:-}" \
+        '{subagent_type: $type, agent_id: $aid}')"
 fi
 
 # Call the consolidated flywheel-doc-check (environment-aware)

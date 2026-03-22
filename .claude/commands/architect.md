@@ -55,7 +55,7 @@ Before starting a design review:
 1. **Project CLAUDE.md files**: Load the relevant domain docs
 2. **Platform patterns**: If `.claude/skills/platform-patterns.md` exists, load it
 3. **External API docs**: If the feature uses external APIs, check context-hub:
-   `chub search "<api>"` \u2014 load `.claude/skills/context-hub.md` for the full workflow
+   `chub search "<api>"` — load `.claude/skills/context-hub.md` for the full workflow
 4. **Similar existing code**: Find patterns to follow in the codebase
 
 ---
@@ -162,7 +162,7 @@ Provide clear recommendations:
 
 ### Vertical Slice Planning
 
-When the feature touches multiple layers (API \u2192 processing \u2192 state \u2192 callback), recommend starting with a **vertical slice** \u2014 the thinnest possible implementation that exercises all layers end-to-end.
+When the feature touches multiple layers (API → processing → state → callback), recommend starting with a **vertical slice** — the thinnest possible implementation that exercises all layers end-to-end.
 
 Per Gall's Law: *"A complex system that works is invariably found to have evolved from a simple system that worked."*
 
@@ -218,8 +218,8 @@ Maintain the project's documentation structure. When new domains or modules are 
 - [ ] `[path]/CLAUDE.md` - [What to add]
 
 ### Unknowns Assessment
-- [ ] All APIs previously used in this project \u2014 no prototype needed
-- [ ] Unknowns identified \u2014 prototype recommended before spec:
+- [ ] All APIs previously used in this project — no prototype needed
+- [ ] Unknowns identified — prototype recommended before spec:
   - [Unknown 1: question to answer]
   - [Unknown 2: question to answer]
 
@@ -266,7 +266,7 @@ After design review:
 Architecture review complete.
 
 Recommendation: PROCEED
-Unknowns: [NONE \u2014 skip to /spec | LIST \u2014 prototype first]
+Unknowns: [NONE — skip to /spec | LIST — prototype first]
 
 Next step: Run `/prototype [unknowns]` or `/spec [feature]`.
 
@@ -307,3 +307,4 @@ Run `/context summarize` if the session is long, to compress progress before han
 <user_request>
 $ARGUMENTS
 </user_request>
+</output>

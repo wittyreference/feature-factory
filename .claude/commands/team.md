@@ -206,3 +206,4 @@ CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=0 claude
 <user_request>
 $ARGUMENTS
 </user_request>
+</output>

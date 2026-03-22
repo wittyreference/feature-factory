@@ -35,8 +35,13 @@ _check_compact_pending() {
 _check_compact_pending
 
 COMMAND=""
+_POST_BASH_SESSION_ID=""
+if [ -n "$_POST_BASH_HOOK_INPUT" ] && ! command -v jq &> /dev/null; then
+    echo "WARNING: jq not installed — post-bash hooks disabled (deployment tracking). Run: brew install jq" >&2
+fi
 if [ -n "$_POST_BASH_HOOK_INPUT" ] && command -v jq &> /dev/null; then
     COMMAND="$(echo "$_POST_BASH_HOOK_INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null)"
+    _POST_BASH_SESSION_ID="$(echo "$_POST_BASH_HOOK_INPUT" | jq -r '.session_id // empty' 2>/dev/null)"
 fi
 
 # Exit if no command
@@ -81,6 +86,26 @@ if echo "$COMMAND" | grep -qE "(npm\s+(test|run\s+(test|build))|jest|vitest|pyte
     if [ -x "$FLYWHEEL_HOOK" ]; then
         "$FLYWHEEL_HOOK" --force
     fi
+fi
+
+# ============================================
+# STRUCTURED EVENT EMISSION (observability)
+# ============================================
+
+source "$SCRIPT_DIR/_emit-event.sh"
+EMIT_SESSION_ID="$_POST_BASH_SESSION_ID"
+
+# Emit bash_command event for every command
+emit_event "bash_command" "$(jq -nc --arg cmd "$COMMAND" '{command: $cmd}')"
+
+# Emit specialized test_run event when tests are run
+if echo "$COMMAND" | grep -qE "(npm\s+(test|run\s+test)|jest|vitest|pytest|cargo\s+test|go\s+test|make\s+test)"; then
+    emit_event "test_run" "$(jq -nc --arg cmd "$COMMAND" '{command: $cmd}')"
+fi
+
+# Emit deploy event when deployment commands are run
+if [ -n "$DEPLOY_CMD" ] && echo "$COMMAND" | grep -qF "$DEPLOY_CMD"; then
+    emit_event "deploy" "$(jq -nc --arg cmd "$COMMAND" '{command: $cmd}')"
 fi
 
 exit 0

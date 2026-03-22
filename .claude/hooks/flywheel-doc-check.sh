@@ -8,6 +8,16 @@
 # 3. Session-tracked files (from post-write hook) - catches everything touched
 # 4. Validation failures (from PatternTracker) - catches unresolved issues
 
+# Parse hook input for session_id (PostToolUse passes JSON on stdin)
+HOOK_INPUT=""
+if [ ! -t 0 ]; then
+    HOOK_INPUT="$(cat)"
+fi
+HOOK_SESSION_ID=""
+if [ -n "$HOOK_INPUT" ] && command -v jq &> /dev/null; then
+    HOOK_SESSION_ID="$(echo "$HOOK_INPUT" | jq -r '.session_id // empty' 2>/dev/null)"
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Source environment detection helper
@@ -20,9 +30,20 @@ fi
 
 # Use environment-aware paths from _meta-mode.sh
 PENDING_ACTIONS_FILE="$CLAUDE_PENDING_ACTIONS"
-SESSION_FILE="$(dirname "$CLAUDE_PENDING_ACTIONS")/.session-files"
-SESSION_START_FILE="$(dirname "$CLAUDE_PENDING_ACTIONS")/.session-start"
-LAST_RUN_FILE="$(dirname "$CLAUDE_PENDING_ACTIONS")/.last-doc-check"
+SESSION_DIR="$(dirname "$CLAUDE_PENDING_ACTIONS")"
+
+# Session-scoped state: read from per-session files for concurrent session support
+if [ -n "$HOOK_SESSION_ID" ]; then
+    SESSIONS_DIR="$SESSION_DIR/.sessions"
+    SESSION_FILE="$SESSIONS_DIR/${HOOK_SESSION_ID}.files"
+    SESSION_START_FILE="$SESSIONS_DIR/${HOOK_SESSION_ID}.start"
+    LAST_RUN_FILE="$SESSIONS_DIR/${HOOK_SESSION_ID}.doc-check"
+else
+    # Fallback for missing session_id
+    SESSION_FILE="$SESSION_DIR/.session-files"
+    SESSION_START_FILE="$SESSION_DIR/.session-start"
+    LAST_RUN_FILE="$SESSION_DIR/.last-doc-check"
+fi
 
 # Accept --force flag to skip debounce
 FORCE=false
@@ -114,7 +135,7 @@ if [ -x "$DRIFT_SCRIPT" ]; then
 fi
 
 # Deduplicate, clean up, and exclude flywheel's own output files
-ALL_FILES=$(echo "$ALL_FILES" | grep -v "^$" | grep -v "pending-actions\.md" | grep -v "\.session-files" | grep -v "\.session-start" | grep -v "\.last-doc-check" | sort -u)
+ALL_FILES=$(echo "$ALL_FILES" | grep -v "^$" | grep -v "pending-actions\.\(md\|json\)" | grep -v "\.session-files" | grep -v "\.session-start" | grep -v "\.last-doc-check" | grep -v "\.sessions/" | sort -u)
 
 if [ -z "$ALL_FILES" ]; then
     exit 0

@@ -12,7 +12,7 @@ This project uses Claude Code hooks (configured in `.claude/settings.json`) to e
 | Hook | Event | Purpose |
 |------|-------|---------|
 | `pre-write-validate.sh` | PreToolUse (Write/Edit) | Blocks credentials, magic test values; warns on naming |
-| `pre-bash-validate.sh` | PreToolUse (Bash) | Blocks --no-verify, pending-actions, validates deploy |
+| `pre-bash-validate.sh` | PreToolUse (Bash) | Blocks commit hook bypass, pending-actions, validates deploy |
 | `post-write.sh` | PostToolUse (Write/Edit) | Auto-lints JS/TS files, tracks files to .session-files |
 | `flywheel-doc-check.sh` | PostToolUse (Write/Edit) | Suggests doc updates based on 4 sources (git status, commits, session-files, pattern-db) |
 | `post-bash.sh` | PostToolUse (Bash) | Logs deploy/test completions |
@@ -38,9 +38,10 @@ This project uses Claude Code hooks (configured in `.claude/settings.json`) to e
 ## What Gets Blocked (Exit Code 2)
 
 - Hardcoded credentials matching config-driven credential patterns from ff.config.json (API keys, tokens, secrets)
-- `git commit --no-verify` or `git commit -n`
+- `git commit` with hook-bypass flags (`--no-verify` or `-n`)
 - `git commit` with unaddressed pending-actions.md (override: `SKIP_PENDING_ACTIONS=true`)
-- `git push --force` to main/master
+- `git commit` with TypeScript compilation errors in staged `.ts/.tsx` files (override: `SKIP_TSC_CHECK=true`)
+- `git push --force` to protected branches
 - Deployment when tests fail
 - Deployment when coverage < 80% (statements or branches)
 - Deployment when linting fails

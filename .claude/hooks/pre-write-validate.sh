@@ -15,6 +15,9 @@ fi
 
 FILE_PATH=""
 CONTENT=""
+if [ -n "$HOOK_INPUT" ] && ! command -v jq &> /dev/null; then
+    echo "WARNING: jq not installed â safety hooks disabled (credential detection, pipeline gate, ABOUTME). Run: brew install jq" >&2
+fi
 if [ -n "$HOOK_INPUT" ] && command -v jq &> /dev/null; then
     FILE_PATH="$(echo "$HOOK_INPUT" | jq -r '.tool_input.file_path // empty' 2>/dev/null)"
     CONTENT="$(echo "$HOOK_INPUT" | jq -r '.tool_input.content // .tool_input.new_string // empty' 2>/dev/null)"
@@ -47,8 +50,19 @@ if [ "$CLAUDE_META_MODE" = "true" ] && [ "$CLAUDE_ALLOW_PRODUCTION_WRITE" != "tr
     RESOLVED_FILE_PATH="$_META_RESOLVED_DIR/$(basename "$FILE_PATH")"
     RESOLVED_PROJECT_ROOT="$(realpath "$PROJECT_ROOT" 2>/dev/null || echo "$PROJECT_ROOT")"
 
-    # Normalize file path (remove project root prefix for comparison)
+    # Compute relative path from both resolved and raw FILE_PATH.
+    # When .meta/ is a symlink to an external directory (e.g., factory-workshop),
+    # realpath resolves it outside PROJECT_ROOT, breaking the prefix strip.
+    # Fall back to the raw FILE_PATH (relative to PROJECT_ROOT) for pattern matching.
     RELATIVE_PATH="${RESOLVED_FILE_PATH#$RESOLVED_PROJECT_ROOT/}"
+    if [[ "$RELATIVE_PATH" == "$RESOLVED_FILE_PATH" ]]; then
+        # Resolved path is outside project root — use raw path instead
+        RELATIVE_PATH="${FILE_PATH#$RESOLVED_PROJECT_ROOT/}"
+        # If still absolute, try stripping unresolved PROJECT_ROOT
+        if [[ "$RELATIVE_PATH" == "$FILE_PATH" ]]; then
+            RELATIVE_PATH="${FILE_PATH#$PROJECT_ROOT/}"
+        fi
+    fi
 
     # Only enforce meta-mode isolation for files INSIDE the project root.
     # Files outside (e.g., ~/.claude/plans/, ~/.claude/memory/) are not
@@ -189,6 +203,35 @@ if [ "$SKIP_CREDENTIALS" = "false" ]; then
             fi
         fi
     done < <(ff_credential_patterns)
+fi
+
+# ============================================
+# PROMPT INJECTION HEURISTIC CHECK
+# ============================================
+
+# Skip injection checks for documentation files (they legitimately discuss these topics)
+SKIP_INJECTION=false
+if [[ "$FILE_PATH" =~ \.md$ ]] || [[ "$FILE_PATH" =~ CLAUDE\.md$ ]] || \
+   [[ "$FILE_PATH" =~ \.test\.(js|ts)$ ]] || [[ "$FILE_PATH" =~ __tests__/ ]] || \
+   [[ "$FILE_PATH" =~ _safety-patterns\.sh$ ]]; then
+    SKIP_INJECTION=true
+fi
+
+if [ "$SKIP_INJECTION" = "false" ] && [ -n "$CONTENT" ]; then
+    source "$HOOK_DIR/_emit-event.sh"
+    source "$HOOK_DIR/_safety-patterns.sh"
+    EMIT_SESSION_ID="$(echo "$HOOK_INPUT" | jq -r '.session_id // empty' 2>/dev/null)"
+
+    if ! check_injection_patterns "$CONTENT" "file_content"; then
+        echo "BLOCKED: Content contains text matching known prompt injection patterns." >&2
+        echo "" >&2
+        echo "This may be a false positive. If the content is legitimate:" >&2
+        echo "  - Documentation files (.md) are exempt from this check" >&2
+        echo "  - Test files are exempt from this check" >&2
+        echo "  - Review the content and use Bash write if needed" >&2
+        echo "" >&2
+        exit 2
+    fi
 fi
 
 # ============================================
