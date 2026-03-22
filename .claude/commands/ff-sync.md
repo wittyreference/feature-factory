@@ -1,10 +1,23 @@
 # Feature Factory Sync
 
-Detect and reconcile drift between the upstream twilio-feature-factory (battle-testing ground) and this generic feature-factory repo.
+Detect and reconcile drift between the upstream source repo and this generic feature-factory.
 
-## Context
+> **Who needs this**: Only feature-factory maintainers who have an upstream source repo (e.g., twilio-feature-factory) where patterns are battle-tested before syncing here. If you forked feature-factory as a standalone toolkit, this command does not apply to you.
 
-The twilio-feature-factory is where engineering patterns are discovered and hardened through real development. When a pattern proves valuable and is platform-agnostic, it should sync to this generic feature-factory. This is the reverse of plugin-sync: battle-tested patterns flow upstream → generic.
+## Prerequisites
+
+Before running any sync steps, verify the upstream repo is accessible:
+
+```bash
+SOURCE_REPO=$(jq -r '.sourceRepo // empty' ff-sync-map.json 2>/dev/null)
+if [ -z "$SOURCE_REPO" ] || [ ! -d "$SOURCE_REPO/.git" ]; then
+    echo "No upstream source repo found at '$SOURCE_REPO'."
+    echo "This command is for feature-factory maintainers who sync from an upstream repo."
+    echo "If you forked feature-factory as a standalone toolkit, you don't need /ff-sync."
+fi
+```
+
+If the source repo is not found, report the message above and **stop**. Do not prompt the user to configure one.
 
 ## Workflow
 

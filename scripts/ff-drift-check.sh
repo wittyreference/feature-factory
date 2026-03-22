@@ -124,6 +124,30 @@ done
 
 UNMAPPED_COUNT=${#UNMAPPED_FILES[@]}
 
+# ─── syncSections header validation ───
+# Warn when a syncSection name doesn't appear as a header in the source file.
+# This catches silent sync failures from renamed section headers.
+
+STALE_SECTIONS=()
+SECTION_ENTRIES=$(jq -r '
+  .mappings | to_entries[] | .value[] |
+  select(.syncSections != null) |
+  .source as $src | .syncSections[] | "\($src)\t\(.)"
+' "$SYNC_MAP" 2>/dev/null)
+
+while IFS=$'\t' read -r src_path section_name; do
+    [[ -z "$src_path" || -z "$section_name" ]] && continue
+    SRC_FILE="$SOURCE_REPO/$src_path"
+    if [[ -f "$SRC_FILE" ]]; then
+        # Look for the section name as a markdown header or shell comment section header
+        if ! grep -qF "$section_name" "$SRC_FILE" 2>/dev/null; then
+            STALE_SECTIONS+=("$src_path: syncSection \"$section_name\" not found in source")
+        fi
+    fi
+done <<< "$SECTION_ENTRIES"
+
+STALE_SECTION_COUNT=${#STALE_SECTIONS[@]}
+
 # Output mode
 MODE="${1:---report}"
 
@@ -155,7 +179,7 @@ case "$MODE" in
         fi
         ;;
     --report|*)
-        if [[ "$DRIFT_COUNT" -eq 0 && "$UNMAPPED_COUNT" -eq 0 ]]; then
+        if [[ "$DRIFT_COUNT" -eq 0 && "$UNMAPPED_COUNT" -eq 0 && "$STALE_SECTION_COUNT" -eq 0 ]]; then
             echo "Feature Factory sync: No drift detected. Source and target are in sync."
         else
             if [[ "$DRIFT_COUNT" -gt 0 ]]; then
@@ -188,6 +212,17 @@ case "$MODE" in
                 done
                 echo ""
                 echo "Add to ff-sync-map.json mappings or excluded list."
+            fi
+            if [[ "$STALE_SECTION_COUNT" -gt 0 ]]; then
+                echo ""
+                echo "STALE SYNC SECTIONS ($STALE_SECTION_COUNT)"
+                echo "─────────────────────────────"
+                for s in "${STALE_SECTIONS[@]}"; do
+                    echo "  ! $s"
+                done
+                echo ""
+                echo "These syncSections no longer match source headers. Sync will silently skip them."
+                echo "Update ff-sync-map.json syncSections to match current source headers."
             fi
         fi
         ;;
