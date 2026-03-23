@@ -431,7 +431,24 @@ echo ""
 
 # --- Commands ---
 echo "Installing commands..."
-copy_dir "$FF_ROOT/.claude/commands" "$TARGET_DIR/.claude/commands"
+# Commands that are maintainer-only and should not be copied to adopter projects
+SKIP_COMMANDS=("ff-sync.md")
+for file in "$FF_ROOT/.claude/commands"/*; do
+    [ -f "$file" ] || continue
+    filename=$(basename "$file")
+    skip=false
+    for s in "${SKIP_COMMANDS[@]}"; do
+        if [ "$filename" = "$s" ]; then
+            skip=true
+            break
+        fi
+    done
+    if [ "$skip" = true ]; then
+        echo -e "  ${YELLOW}skip${NC} $filename (maintainer-only)"
+        continue
+    fi
+    copy_file "$file" "$TARGET_DIR/.claude/commands/$filename"
+done
 echo ""
 
 # --- Skills ---
