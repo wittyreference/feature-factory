@@ -282,7 +282,16 @@ detect_source_dirs() {
             fi
             ;;
         rust)
-            dirs="src/"
+            if [ -f "$TARGET_DIR/Cargo.toml" ] && grep -q '\[workspace\]' "$TARGET_DIR/Cargo.toml"; then
+                # Extract workspace member directories from Cargo.toml
+                members=$(sed -n '/^members/,/\]/p' "$TARGET_DIR/Cargo.toml" | grep -o '"[^"]*"' | tr -d '"' | head -10)
+                for m in $members; do
+                    [ -d "$TARGET_DIR/$m" ] && dirs="$dirs $m/"
+                done
+            fi
+            # Default to src/ if nothing found
+            dirs=$(echo "$dirs" | xargs)
+            [ -z "$dirs" ] && dirs="src/"
             ;;
         *)
             [ -d "$TARGET_DIR/src" ] && dirs="src/"
