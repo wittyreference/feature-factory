@@ -30,6 +30,9 @@ Move stable learnings to permanent docs:
 
 ## 3. Clear
 
+> **Enforced by hook**: The pre-write hook blocks bulk clearing of learnings.md
+> if learnings-archive.md has not been updated in the same session.
+
 Before removing promoted entries from learnings.md, **always copy them to learnings-archive.md first** (append at top, below header). Then remove from learnings.md. This preserves the full discovery history.
 
 ## Automation
@@ -38,12 +41,14 @@ The `doc-update-check.sh` hook detects file changes and appends documentation su
 
 **Before committing, ALWAYS check for pending actions:**
 ```bash
-cat .meta/pending-actions.md 2>/dev/null || cat .claude/pending-actions.md 2>/dev/null || echo "No pending actions"
+jq -r '.actions[] | "- [\(.timestamp)] \(.target) - \(.reason)"' .meta/pending-actions.json 2>/dev/null || \
+jq -r '.actions[] | "- [\(.timestamp)] \(.target) - \(.reason)"' .claude/pending-actions.json 2>/dev/null || \
+echo "No pending actions"
 ```
 
 After addressing actions, clear the file:
 ```bash
-rm -f .meta/pending-actions.md .claude/pending-actions.md
+rm -f .meta/pending-actions.json .claude/pending-actions.json
 ```
 
 ## Documentation Standards for Technical Assertions

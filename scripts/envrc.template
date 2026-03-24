@@ -20,5 +20,11 @@
 #   unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
 #   unset AWS_REGION AWS_DEFAULT_REGION
 
-# --- Step 2: Load project .env if it exists ---
+# --- Step 2: Auto-switch Node version via fnm if .node-version exists ---
+if has fnm && [ -f .node-version ]; then
+  eval "$(fnm env --use-on-cd)"
+  fnm use
+fi
+
+# --- Step 3: Load project .env if it exists ---
 dotenv_if_exists

@@ -28,13 +28,13 @@ wc -l .meta/learnings.md 2>/dev/null || wc -l .claude/learnings.md 2>/dev/null
 # Promoted entries should be in domain CLAUDE.md, DESIGN_DECISIONS.md, or operational-gotchas.md
 ```
 
-**Action**: Clear promoted entries (archive to `learnings-archive.md` first per flywheel protocol).
+**Action**: Clear promoted entries (archive to `learnings-archive.md` first per flywheel protocol). The pre-write hook blocks bulk clears that skip the archive step.
 
 ### 2. Pending Actions Staleness
 
 ```bash
 # Show pending actions age
-cat .meta/pending-actions.md 2>/dev/null || cat .claude/pending-actions.md 2>/dev/null
+cat .meta/pending-actions.json 2>/dev/null || cat .claude/pending-actions.json 2>/dev/null
 ```
 
 **Action**: Items older than 7 days are likely stale. Remove them -- if they were important, they'll resurface.

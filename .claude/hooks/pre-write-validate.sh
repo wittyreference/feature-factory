@@ -16,7 +16,8 @@ fi
 FILE_PATH=""
 CONTENT=""
 if [ -n "$HOOK_INPUT" ] && ! command -v jq &> /dev/null; then
-    echo "WARNING: jq not installed â safety hooks disabled (credential detection, pipeline gate, ABOUTME). Run: brew install jq" >&2
+    echo "BLOCKED: jq not installed — safety hooks cannot run (credential detection, pipeline gate, ABOUTME). Install: brew install jq" >&2
+    exit 2
 fi
 if [ -n "$HOOK_INPUT" ] && command -v jq &> /dev/null; then
     FILE_PATH="$(echo "$HOOK_INPUT" | jq -r '.tool_input.file_path // empty' 2>/dev/null)"
@@ -127,6 +128,50 @@ if [ "$CLAUDE_META_MODE" = "true" ] && [ "$CLAUDE_ALLOW_PRODUCTION_WRITE" != "tr
             echo "Or remove .meta/ directory to exit meta mode entirely." >&2
             echo "" >&2
             exit 2
+        fi
+    fi
+fi
+
+# ============================================
+# LEARNINGS ARCHIVAL GUARD
+# ============================================
+# Blocks bulk truncation of learnings.md without a recent archive update.
+# Prevents the doc-flywheel Step 3 archival step from being skipped.
+# Bypass: SKIP_LEARNINGS_GUARD=true
+
+if [[ "$SKIP_LEARNINGS_GUARD" != "true" ]] && \
+   [[ "$FILE_PATH" =~ learnings\.md$ ]] && \
+   [[ ! "$FILE_PATH" =~ learnings-archive\.md$ ]]; then
+    # Resolve the actual file (may be behind a symlink)
+    _LEARNINGS_DIR="$(dirname "$FILE_PATH")"
+    _LEARNINGS_REAL_DIR="$(realpath "$_LEARNINGS_DIR" 2>/dev/null || echo "$_LEARNINGS_DIR")"
+    _LEARNINGS_REAL="$_LEARNINGS_REAL_DIR/$(basename "$FILE_PATH")"
+    if [ -f "$_LEARNINGS_REAL" ]; then
+        _CURRENT_LINES=$(wc -l < "$_LEARNINGS_REAL" | tr -d ' ')
+        _NEW_LINES=$(echo "$CONTENT" | wc -l | tr -d ' ')
+        # Trigger: file >100 lines being reduced to <50% of current size
+        if [ "$_CURRENT_LINES" -gt 100 ] && [ "$_NEW_LINES" -lt $(( _CURRENT_LINES / 2 )) ]; then
+            _ARCHIVE_REAL="$_LEARNINGS_REAL_DIR/learnings-archive.md"
+            _ARCHIVE_FRESH=false
+            if [ -f "$_ARCHIVE_REAL" ]; then
+                _ARCHIVE_MTIME=$(stat -f %m "$_ARCHIVE_REAL" 2>/dev/null || stat -c %Y "$_ARCHIVE_REAL" 2>/dev/null || echo 0)
+                _NOW=$(date +%s)
+                # Archive must have been modified within last 5 minutes
+                if [ $(( _NOW - _ARCHIVE_MTIME )) -lt 300 ]; then
+                    _ARCHIVE_FRESH=true
+                fi
+            fi
+            if [ "$_ARCHIVE_FRESH" = "false" ]; then
+                echo "BLOCKED: learnings.md is being reduced from $_CURRENT_LINES to $_NEW_LINES lines" >&2
+                echo "without a recent update to learnings-archive.md." >&2
+                echo "" >&2
+                echo "Per doc-flywheel Step 3: ALWAYS copy entries to learnings-archive.md" >&2
+                echo "before clearing them from learnings.md." >&2
+                echo "" >&2
+                echo "To fix: append entries to learnings-archive.md first, then clear." >&2
+                echo "Override: SKIP_LEARNINGS_GUARD=true" >&2
+                exit 2
+            fi
         fi
     fi
 fi

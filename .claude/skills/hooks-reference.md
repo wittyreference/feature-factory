@@ -13,9 +13,9 @@ This project uses Claude Code hooks (configured in `.claude/settings.json`) to e
 |------|-------|---------|
 | `pre-write-validate.sh` | PreToolUse (Write/Edit) | Blocks credentials, magic test values; warns on naming |
 | `pre-bash-validate.sh` | PreToolUse (Bash) | Blocks commit hook bypass, pending-actions, validates deploy |
-| `post-write.sh` | PostToolUse (Write/Edit) | Auto-lints JS/TS files, tracks files to .session-files |
+| `post-write.sh` | PostToolUse (Write/Edit) | Auto-lints JS/TS files, tracks files to .session-files, increments tool-call counter |
 | `flywheel-doc-check.sh` | PostToolUse (Write/Edit) | Suggests doc updates based on 4 sources (git status, commits, session-files, pattern-db) |
-| `post-bash.sh` | PostToolUse (Bash) | Logs deploy/test completions |
+| `post-bash.sh` | PostToolUse (Bash) | Logs deploy/test completions, increments tool-call counter |
 | `subagent-log.sh` | SubagentStop | Logs workflow activity, triggers flywheel |
 | `teammate-idle-check.sh` | TeammateIdle | Quality gate before teammate goes idle |
 | `task-completed-check.sh` | TaskCompleted | TDD/coverage/credential gate on task completion |
@@ -39,7 +39,7 @@ This project uses Claude Code hooks (configured in `.claude/settings.json`) to e
 
 - Hardcoded credentials matching config-driven credential patterns from ff.config.json (API keys, tokens, secrets)
 - `git commit` with hook-bypass flags (`--no-verify` or `-n`)
-- `git commit` with unaddressed pending-actions.md (override: `SKIP_PENDING_ACTIONS=true`)
+- `git commit` with unaddressed pending-actions.json (override: `SKIP_PENDING_ACTIONS=true`)
 - `git commit` with TypeScript compilation errors in staged `.ts/.tsx` files (override: `SKIP_TSC_CHECK=true`)
 - `git push --force` to protected branches
 - Deployment when tests fail

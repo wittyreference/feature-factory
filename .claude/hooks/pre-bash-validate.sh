@@ -9,6 +9,10 @@ if [ ! -t 0 ]; then
 fi
 
 COMMAND=""
+if [ -n "$HOOK_INPUT" ] && ! command -v jq &> /dev/null; then
+    echo "BLOCKED: jq not installed — safety hooks cannot run. Install: brew install jq" >&2
+    exit 2
+fi
 if [ -n "$HOOK_INPUT" ] && command -v jq &> /dev/null; then
     COMMAND="$(echo "$HOOK_INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null)"
 fi
@@ -212,6 +216,55 @@ if echo "$COMMAND" | grep -qE "^git\s+commit"; then
                 if [ "${SKIP_META_HOOK_CHECK:-}" != "true" ]; then
                     exit 2
                 fi
+            fi
+        fi
+    fi
+
+    # ============================================
+    # TYPESCRIPT COMPILATION CHECK (BLOCKING)
+    # ============================================
+    # Run tsc --noEmit for staged .ts/.tsx files to catch type errors before commit.
+    # Only runs for directories that have a tsconfig.json.
+    STAGED_TS=$(git diff --staged --name-only 2>/dev/null | grep -E '\.(ts|tsx)$' || true)
+    if [ -n "$STAGED_TS" ] && command -v npx &>/dev/null; then
+        TSC_FAILED=false
+        TSC_ERRORS=""
+
+        # Find directories with tsconfig.json that have staged TypeScript files
+        TRACKED_DIRS=$(ff_config_array ".project.sourceDirectories" 2>/dev/null)
+        if [ -n "$TRACKED_DIRS" ]; then
+            while IFS= read -r dir; do
+                [ -z "$dir" ] && continue
+                # Check if any staged TS files are under this directory
+                if echo "$STAGED_TS" | grep -q "^${dir}"; then
+                    # Check if there's a tsconfig.json in or above this directory
+                    TSC_DIR="$PROJECT_ROOT/$dir"
+                    while [ "$TSC_DIR" != "$PROJECT_ROOT" ] && [ "$TSC_DIR" != "/" ]; do
+                        if [ -f "$TSC_DIR/tsconfig.json" ]; then
+                            TSC_OUT=$(cd "$TSC_DIR" && npx tsc --noEmit 2>&1 || true)
+                            if echo "$TSC_OUT" | grep -q 'error TS'; then
+                                TSC_FAILED=true
+                                TSC_ERRORS="${TSC_ERRORS}\n--- $dir ---\n$(echo "$TSC_OUT" | grep 'error TS' | head -10)"
+                            fi
+                            break
+                        fi
+                        TSC_DIR="$(dirname "$TSC_DIR")"
+                    done
+                fi
+            done <<< "$TRACKED_DIRS"
+        fi
+
+        if [ "$TSC_FAILED" = true ]; then
+            echo "" >&2
+            echo "BLOCKED: TypeScript compilation errors in staged files" >&2
+            printf "%b" "$TSC_ERRORS" >&2
+            echo "" >&2
+            echo "" >&2
+            echo "Fix type errors before committing." >&2
+            echo "Override: SKIP_TSC_CHECK=true git commit ..." >&2
+            echo "" >&2
+            if [ "${SKIP_TSC_CHECK:-}" != "true" ]; then
+                exit 2
             fi
         fi
     fi

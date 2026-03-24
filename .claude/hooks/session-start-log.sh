@@ -65,6 +65,12 @@ fi
 # --- Session Bootstrap Checks ---
 # Local-only checks (no API calls, <500ms). Warnings to stderr so Claude sees them.
 
+# 0. First-run name check: detect if CLAUDE.md still has the placeholder
+PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+if grep -q '\[Your name here\]' "$PROJECT_ROOT/CLAUDE.md" 2>/dev/null; then
+    echo "FIRST_RUN: Preferred name not set. Ask the user for their preferred name and update CLAUDE.md." >&2
+fi
+
 # Determine session dir early for stale check
 if [ "$CLAUDE_META_MODE" = "true" ]; then
     SESSION_DIR="$PROJECT_ROOT/.meta"
@@ -296,6 +302,7 @@ fi
 # Write to per-session state files (concurrent session support)
 date +%s > "$SESSIONS_DIR/${SESSION_ID}.start"
 rm -f "$SESSIONS_DIR/${SESSION_ID}.files"
+rm -f "$SESSIONS_DIR/${SESSION_ID}.tool-calls"
 
 # Also write legacy shared files for backward compat (wrap-up, tests)
 date +%s > "$SESSION_DIR/.session-start"

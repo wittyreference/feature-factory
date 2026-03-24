@@ -1,6 +1,6 @@
 ---
 description: Stage and commit with validation. Use when user wants to commit, save progress, or checkpoint work.
-allowed-tools: Bash(git:*), Read, Grep, Edit
+allowed-tools: Bash(git:*), Bash(npm:*), Bash(npx:*), Read, Grep, Edit
 ---
 
 # Commit Helper
@@ -21,7 +21,9 @@ npx tsc --noEmit
 
 ### 2. Test Suite
 
-Run the project's test suite. All tests must pass.
+```bash
+npm test --bail
+```
 
 ### 3. ABOUTME Comments
 

@@ -71,6 +71,14 @@ Add entries to the learnings file using the standard format:
 
 If a learning is stable and broadly applicable, promote it directly to the target doc (CLAUDE.md, DESIGN_DECISIONS.md, hooks-reference, etc.) and note "Promoted to: [target]" in the learnings entry.
 
+### 2b. Learnings Archival (if clearing)
+
+If learnings.md will be cleared (partially or fully):
+
+1. **First**: Append entries being removed to `learnings-archive.md` (same directory, insert below header, above existing entries)
+2. **Then**: Remove them from `learnings.md`
+3. The pre-write hook blocks bulk clears that skip the archive step
+
 ### 3. Update Documentation
 
 For each changed file, determine if documentation needs updating:
@@ -82,6 +90,8 @@ For each changed file, determine if documentation needs updating:
 | `scripts/` | Scripts documentation |
 | Architecture changes | `DESIGN_DECISIONS.md` |
 | New slash commands or skills | Root CLAUDE.md slash command table |
+| New invariants | Root CLAUDE.md "Architectural Invariants" section |
+| New CLAUDE.md or REFERENCE.md files | `.claude/references/doc-navigator.md` |
 
 Only update docs where the session's changes actually warrant it. Don't touch docs for unrelated areas.
 
@@ -139,12 +149,39 @@ If significant code was produced this session (especially from autonomous work v
 Quick health check on auto-loaded context size:
 
 ```bash
-wc -l CLAUDE.md
+MEMORY_PATH="$HOME/.claude/projects/$(pwd | sed 's|/|-|g')/memory/MEMORY.md"
+wc -l CLAUDE.md "$MEMORY_PATH" 2>/dev/null
 ```
 
-Report the line count in the summary. If auto-memory is over 150 lines, flag it — entries beyond 200 are truncated and never seen. Prune by replacing promoted entries with pointers.
+Report the MEMORY.md line count in the summary. If over 150 lines, flag it — entries beyond 200 are truncated and never seen. Prune by replacing promoted entries with pointers.
 
-### 7. Clear Pending Actions
+### 7. Infrastructure Health Checks
+
+Quick checks that hooks and automation are still working:
+
+**Compaction summary capture:**
+
+With 1M context windows, compaction is rare. Only check this if compaction actually occurred during the session:
+```bash
+# Check if this session had any compaction events
+grep "$(date +%Y-%m-%d)" .meta/logs/session-events.log 2>/dev/null | grep -q "source=compact"
+```
+If compaction fired this session, verify a corresponding summary was captured:
+```bash
+ls -lt .meta/logs/compaction-summary-*.md 2>/dev/null | head -1
+```
+If compaction occurred but no summary exists, the `post-compact-summary.sh` hook may have stopped firing. Skip silently if no compaction occurred.
+
+**Plan archiving:**
+```bash
+# Check the most recent archived plan
+ls -lt .meta/plans/ 2>/dev/null | head -3
+```
+If plans are not being archived after plan mode exits, verify the `archive-plan.sh` hook is registered under `Stop` in `.claude/settings.json`.
+
+Report any issues in the summary. Skip if both are healthy.
+
+### 8. Clear Pending Actions
 
 After addressing flywheel suggestions, clear the pending actions file:
 ```markdown
@@ -157,7 +194,24 @@ Actions detected by the documentation flywheel. Review before committing.
 <!-- Doc suggestions will be appended below this line by flywheel-doc-check.sh -->
 ```
 
-### 8. Summary
+### 8b. Workshop Repo Status (meta mode only)
+
+If `.meta/` is a symlink to a separate git repo, check for unsaved work:
+
+```bash
+if [ -L "$PROJECT_ROOT/.meta" ]; then
+    WORKSHOP_DIR=$(readlink -f "$PROJECT_ROOT/.meta" 2>/dev/null || readlink "$PROJECT_ROOT/.meta")
+    cd "$WORKSHOP_DIR"
+    git status --porcelain 2>/dev/null | wc -l | tr -d ' '  # uncommitted
+    git log --oneline '@{upstream}..HEAD' 2>/dev/null | wc -l | tr -d ' '  # unpushed
+fi
+```
+
+If uncommitted or unpushed changes exist, prompt: "Commit workshop changes? (`cd .meta && git add -A && git commit -m 'session: ...' && git push`)"
+
+Skip silently if `.meta/` is not a symlink or no issues found.
+
+### 9. Summary
 
 Output what was updated:
 
@@ -170,12 +224,22 @@ Output what was updated:
 ### Docs Updated
 - [list of files modified with brief reason]
 
+### Distribution Drift
+- Feature-factory: [N files drifted / in sync] — [run /ff-sync if needed]
+
 ### Todo
 - [items checked off or updated]
 
 ### Ready to Commit
 [yes/no — and what to commit]
 ```
+
+For the Distribution Drift section, run:
+```bash
+./scripts/ff-drift-check.sh --count 2>/dev/null || echo "0"
+```
+
+If the count is 0, report "in sync" and move on. If drift exists, include the count and suggest running the appropriate sync command.
 
 ## Notes
 
@@ -188,4 +252,3 @@ Output what was updated:
 <user_request>
 $ARGUMENTS
 </user_request>
-</output>

@@ -1,5 +1,5 @@
 ---
-description: Coordinate parallel Claude Code teammates. Use when launching agent teams for parallel work like new-feature, bug-fix, code-review, or refactor workflows.
+description: Coordinate parallel Claude Code teammates. Use when launching agent teams for parallel work like new-feature, bug-fix, code-review, refactor, or docs-update workflows.
 argument-hint: [workflow] [task]
 ---
 
@@ -132,6 +132,140 @@ Phase 3 (Parallel — verify):
 - Teammate "verify-qa": Re-runs tests, compares to baseline (parallel with reviewer)
 - Teammate "reviewer": Reviews refactored code for patterns and correctness
 
+### 5. Docs Update (`docs-update`)
+
+Parallel writers working blind to each other, then parallel multi-lens reviewers, then a final editor. Documentation is a shipping product — this team treats it with the same rigor as code.
+
+```text
+Phase 1 (Parallel — independent writers, blind to each other):
+  ├── writer-1: File cluster A (assigned issues + target files)
+  ├── writer-2: File cluster B (assigned issues + target files)
+  └── writer-3: File cluster C (assigned issues + target files)
+
+Phase 2 (Parallel — multi-lens reviewers, each reviews ALL writers' output):
+  ├── tone-reviewer: Persona accessibility, reading level, jargon
+  ├── accuracy-reviewer: Technical correctness, API fidelity, code examples
+  └── consistency-reviewer: Cross-references, contradictions, terminology
+
+Phase 3 (Sequential — final editor):
+  editor: Resolves reviewer findings, checks flow, produces final version
+```
+
+**Spawn plan:**
+- Lead groups issues by target file into 2-4 clusters (no file overlap between writers)
+- Teammate "writer-N": Launched with `isolation: "worktree"` — each writer gets an isolated copy of the repo, immune to merges on main. Reads full target file(s), reads assigned GitHub issue(s), writes additions/corrections, commits on their worktree branch. Must satisfy Writer Acceptance Criteria before completing.
+- NO cross-messaging between writers during Phase 1 — they work blind to prevent anchoring
+- After all writers complete: Lead merges each writer's worktree branch into main sequentially, resolving any conflicts
+- Teammate "tone": Reviews ALL writers' merged diffs for persona accessibility (see Reviewer Rubric)
+- Teammate "accuracy": Reviews ALL writers' merged diffs for technical correctness (see Reviewer Rubric)
+- Teammate "consistency": Reviews ALL writers' merged diffs for cross-reference validity (see Reviewer Rubric)
+- NO cross-messaging between reviewers during Phase 2 — independent lenses prevent groupthink
+- Teammate "editor": Reads all reviewer findings, resolves conflicts, applies final edits, signs off
+
+**Worktree isolation (mandatory for writers):**
+
+Writers MUST use `isolation: "worktree"` on the Agent tool. This prevents a class of bug where merges from other sessions or worktrees overwrite writers' uncommitted changes in the main working directory. Each writer commits on their own branch; the lead merges branches sequentially after all writers complete.
+
+Reviewers and the editor operate on main after merges — they don't need worktree isolation because they don't write concurrently.
+
+```
+Writer launch example:
+  Agent(name: "writer-a", isolation: "worktree", prompt: "...")
+  Agent(name: "writer-b", isolation: "worktree", prompt: "...")
+  Agent(name: "writer-c", isolation: "worktree", prompt: "...")
+
+After all complete:
+  git merge writer-a-branch
+  git merge writer-b-branch  (no conflicts — different file clusters)
+  git merge writer-c-branch
+```
+
+**File ownership:**
+- Each writer gets exclusive write access to their assigned file cluster (enforced by file-cluster assignment, not by tooling — worktrees give full repo access)
+- All writers have read access to all files (for understanding context, not for coordination)
+- Reviewers have read-only access to all files + all writers' merged diffs
+- Editor has write access to all files modified by writers
+
+**Writer Acceptance Criteria (must satisfy before handoff):**
+
+Writers must verify these before marking their task complete. These are the docs equivalent of "tests must pass" — a writer who skips them blocks the team.
+
+1. **Read-before-write**: Read the full target file before editing. No blind insertions.
+2. **Issue coverage**: Every assigned issue number must map to a specific edit. No silent skips — if an issue can't be addressed, report it explicitly with rationale.
+3. **Verifiable claims**: API names, parameter names, and behavior claims must be verified against the current codebase (`grep`) or project docs. No claims from memory alone.
+4. **Scope boundaries**: Where a capability ends and external responsibility begins, say so explicitly. Ambiguity on scope is a defect.
+5. **Style match**: New content matches the target file's existing style — heading level, bullet depth, terminology, voice. Read adjacent sections and mirror them.
+
+**Reviewer Scoring Rubric:**
+
+Reviewers must produce structured findings, not free-form impressions. "Looks good" is not an acceptable review — either produce findings or certify "no findings for my lens" with evidence of what was checked.
+
+Each finding uses this format:
+```
+## Finding: [title]
+- Severity: BLOCK | SUGGEST | NIT
+- File: [path:line]
+- Issue: [what's wrong]
+- Evidence: [how verified — grep output, doc reference, code inspection, persona test]
+- Fix: [specific recommendation]
+```
+
+Severity definitions:
+- **BLOCK**: Must be resolved before merge. Incorrect behavior, contradicts existing content, misleads a persona, breaks a cross-reference.
+- **SUGGEST**: Should be resolved but won't mislead. Awkward phrasing, suboptimal example, could be clearer.
+- **NIT**: Style preference. Take or leave.
+
+Lens-specific checklists:
+
+*Tone & Accessibility reviewer:*
+- [ ] Would a non-technical stakeholder understand this without Googling terms?
+- [ ] Would a developer new to the project be able to act on this immediately?
+- [ ] Are there business-language bridges alongside technical terms?
+- [ ] Is the reading level consistent with adjacent sections?
+- [ ] Are acronyms expanded on first use within each file?
+
+*Technical Accuracy reviewer:*
+- [ ] Do API names and parameters match the current codebase? (`grep` for them)
+- [ ] Are code examples syntactically correct and using current patterns?
+- [ ] Do behavioral claims match actual behavior? (check against source code or docs)
+- [ ] Are there claims that were true historically but may be stale?
+- [ ] Do "scope boundary" notes correctly attribute what is built-in vs external?
+
+*Consistency & Cross-Reference reviewer:*
+- [ ] Does new content contradict anything in the same file?
+- [ ] Does new content contradict content in other files?
+- [ ] Are internal cross-references (`see [section]`, `(file.md)`) valid and resolvable?
+- [ ] Is terminology consistent across files?
+- [ ] Do gotchas in reference files match gotchas in other docs?
+
+**Editor Sign-Off Protocol:**
+
+The editor is the merge gate — equivalent to the code review approval. No commit without editor sign-off.
+
+1. Read all reviewer findings (BLOCK, SUGGEST, NIT)
+2. For each BLOCK: resolve it (edit the file) or reject it (with documented rationale)
+3. For each SUGGEST: accept or defer (no response needed for NITs)
+4. Check overall flow — does the integrated document read coherently end-to-end?
+5. Check for redundancy — did multiple writers add overlapping content?
+6. Produce sign-off:
+```
+## Editor Sign-Off
+- BLOCK findings resolved: [N/N]
+- SUGGEST findings accepted: [N/M]
+- Rejected findings: [list with rationale]
+- Overall assessment: APPROVED | NEEDS REVISION
+- Files modified: [list]
+- Issues closed: [list with commit refs]
+```
+
+If NEEDS REVISION: editor sends specific files back to the original writer with the unresolved findings. Writer revises, reviewer re-checks their lens only on the revised content, editor re-signs.
+
+**When to use:**
+- Batch doc-gap fixes from validation runs
+- Updating multiple reference files after an API or product change
+- Adding scope boundaries, examples, or guidance across use cases
+- Any task where 3+ doc files need independent but coordinated updates
+
 ## Orchestration Protocol
 
 ### 1. PARSE REQUEST
@@ -143,6 +277,7 @@ Determine which team configuration to use based on the request:
 | "fix", "debug", "investigate", "broken" | `bug-fix` |
 | "review", "audit", "check" | `code-review` |
 | "refactor", "clean", "restructure" | `refactor` |
+| "docs", "document", "doc-gap", "write-up" | `docs-update` |
 
 ### 2. CREATE TASK LIST
 Set up the shared task list with dependencies:
@@ -173,6 +308,8 @@ Launch teammates with:
 
 These are enforced by hooks — teammates cannot bypass them:
 
+### Code Quality Gates
+
 | Gate | Enforced By | Behavior |
 |------|-------------|----------|
 | Tests must fail (Red Phase) | `teammate-idle-check.sh` | Blocks test-gen teammate from completing without failing tests |
@@ -181,10 +318,22 @@ These are enforced by hooks — teammates cannot bypass them:
 | No hardcoded credentials | `task-completed-check.sh` | Blocks task with API key or secret patterns in source |
 | Lint clean | `teammate-idle-check.sh` | Blocks dev teammate with lint errors |
 
+### Docs Quality Gates (docs-update teams)
+
+| Gate | Enforced By | Behavior |
+|------|-------------|----------|
+| Read-before-write | Writer Acceptance Criteria | Writer must read full target file before editing |
+| Issue coverage | Writer Acceptance Criteria | Every assigned issue must map to a specific edit — no silent skips |
+| Verifiable claims | Accuracy Reviewer | API names and behaviors verified via `grep` or docs — no claims from memory |
+| No contradictions | Consistency Reviewer | New content must not conflict with existing content in same or adjacent files |
+| Structured findings | Reviewer Rubric | Reviewers must produce BLOCK/SUGGEST/NIT findings or certify "no findings" with evidence |
+| Editor sign-off | Editor Sign-Off Protocol | All BLOCK findings resolved before commit — editor is the merge gate |
+
 ## Important Constraints
 
 - **No overnight runs**: Teammates cannot resume sessions. Keep tasks small enough to complete in one session.
 - **File conflicts**: Parallel teammates must not edit the same file. Define clear file ownership.
+- **Worktree isolation for writers**: Any team configuration where parallel agents write to files MUST use `isolation: "worktree"` on the Agent tool. Without it, merges from other sessions or worktrees can silently overwrite uncommitted changes in the main working directory. This applies to `docs-update` writers, `new-feature` builders, and `refactor` builders.
 - **Token cost**: Teams use ~2-3x tokens vs subagents. Use for high-value tasks (debugging, review, complex features).
 - **Experimental**: Behind `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` flag. All existing subagent workflows work as fallback.
 
@@ -206,4 +355,3 @@ CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=0 claude
 <user_request>
 $ARGUMENTS
 </user_request>
-</output>

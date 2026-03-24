@@ -20,13 +20,13 @@ ITEMS=()
 # --- 1. Uncommitted changes ---
 UNCOMMITTED=$(git -C "$PROJECT_ROOT" status --porcelain 2>/dev/null | wc -l | tr -d ' ')
 if [[ "$UNCOMMITTED" -gt 0 ]]; then
-    ITEMS+=("UNCOMMITTED: $UNCOMMITTED file(s) with uncommitted changes")
+    ITEMS+=("[MANUAL] UNCOMMITTED: $UNCOMMITTED file(s) with uncommitted changes")
 fi
 
 # --- 2. Unpushed commits ---
 UNPUSHED=$(git -C "$PROJECT_ROOT" log --oneline '@{upstream}..HEAD' 2>/dev/null | wc -l | tr -d ' ')
 if [[ "$UNPUSHED" -gt 0 ]]; then
-    ITEMS+=("UNPUSHED: $UNPUSHED commit(s) not pushed to remote")
+    ITEMS+=("[MANUAL] UNPUSHED: $UNPUSHED commit(s) not pushed to remote")
 fi
 
 # --- 3. Learnings freshness ---
@@ -35,17 +35,17 @@ if [[ -f "$CLAUDE_LEARNINGS" ]]; then
     NOW=$(date +%s)
     LEARN_AGE=$(( NOW - LEARN_MTIME ))
     if [[ $LEARN_AGE -gt 14400 ]]; then
-        ITEMS+=("LEARNINGS: Learnings file not updated this session — capture any discoveries to $CLAUDE_LEARNINGS")
+        ITEMS+=("[MANUAL] LEARNINGS: Learnings file not updated this session — capture any discoveries to $CLAUDE_LEARNINGS")
     fi
 else
-    ITEMS+=("LEARNINGS: No learnings file found — consider creating $CLAUDE_LEARNINGS")
+    ITEMS+=("[MANUAL] LEARNINGS: No learnings file found — consider creating $CLAUDE_LEARNINGS")
 fi
 
 # --- 4. Pending doc actions ---
 if [[ -f "$CLAUDE_PENDING_ACTIONS" ]]; then
     UNCHECKED=$(grep -c '^\- \[ \]' "$CLAUDE_PENDING_ACTIONS" 2>/dev/null) || UNCHECKED=0
     if [[ "$UNCHECKED" -gt 0 ]]; then
-        ITEMS+=("DOCS: $UNCHECKED unchecked pending doc action(s) in $(basename "$CLAUDE_PENDING_ACTIONS")")
+        ITEMS+=("[AUTO] DOCS: $UNCHECKED unchecked pending doc action(s) in $(basename "$CLAUDE_PENDING_ACTIONS")")
     fi
 fi
 
@@ -55,7 +55,7 @@ if [[ -n "$LAST_TEST_COMMIT" ]]; then
     CHANGED_SINCE_TEST=$(git -C "$PROJECT_ROOT" diff --name-only "$LAST_TEST_COMMIT" -- '*.ts' '*.js' '*.py' '*.go' '*.rs' '*.json' 2>/dev/null | grep -v node_modules | grep -v dist | wc -l | tr -d ' ')
     if [[ "$CHANGED_SINCE_TEST" -gt 5 ]]; then
         TEST_CMD=$(ff_config ".testing.command" "npm test" 2>/dev/null)
-        ITEMS+=("TESTS: $CHANGED_SINCE_TEST source files changed since last test commit — consider running $TEST_CMD")
+        ITEMS+=("[MANUAL] TESTS: $CHANGED_SINCE_TEST source files changed since last test commit — consider running $TEST_CMD")
     fi
 fi
 
@@ -69,7 +69,7 @@ if [ -n "$TRACKED_DIRS" ]; then
     done <<< "$TRACKED_DIRS"
     if [[ "$TOTAL_TRACKED_CHANGES" -gt 0 ]]; then
         TEST_CMD=$(ff_config ".testing.command" "npm test" 2>/dev/null)
-        ITEMS+=("E2E: $TOTAL_TRACKED_CHANGES source file(s) modified — consider running tests")
+        ITEMS+=("[MANUAL] E2E: $TOTAL_TRACKED_CHANGES source file(s) modified — consider running tests")
     fi
 fi
 
@@ -78,7 +78,7 @@ MEMORY_FILE="$HOME/.claude/projects/$(echo "$PROJECT_ROOT" | sed 's|/|-|g')/memo
 if [[ -f "$MEMORY_FILE" ]]; then
     MEMORY_LINES=$(wc -l < "$MEMORY_FILE" | tr -d ' ')
     if [[ "$MEMORY_LINES" -gt 100 ]]; then
-        ITEMS+=("MEMORY: ${MEMORY_LINES}/200 lines — run /wrap-up to prune stale entries")
+        ITEMS+=("[AUTO] MEMORY: ${MEMORY_LINES}/200 lines — run /wrap-up to prune stale entries")
     fi
 fi
 
@@ -87,7 +87,7 @@ README_DRIFT_SCRIPT="$PROJECT_ROOT/scripts/check-readme-drift.sh"
 if [[ -x "$README_DRIFT_SCRIPT" ]]; then
     DRIFT_OUTPUT=$("$README_DRIFT_SCRIPT" --quiet 2>/dev/null) || true
     if [[ -n "$DRIFT_OUTPUT" ]]; then
-        ITEMS+=("README: $DRIFT_OUTPUT")
+        ITEMS+=("[AUTO] README: $DRIFT_OUTPUT")
     fi
 fi
 
@@ -97,7 +97,7 @@ if [ "$CLAUDE_META_MODE" = "true" ] && [ -n "${CLAUDE_LEARNING_DIR:-}" ] && [ -d
     if [ -f "$EXERCISE_FILE" ]; then
         EXERCISE_COUNT=$(grep -c '^## ' "$EXERCISE_FILE" 2>/dev/null) || EXERCISE_COUNT=0
         if [[ "$EXERCISE_COUNT" -gt 0 ]]; then
-            ITEMS+=("LEARNING: $EXERCISE_COUNT exercise(s) pending — use /learn to build comprehension of autonomous work")
+            ITEMS+=("[MANUAL] LEARNING: $EXERCISE_COUNT exercise(s) pending — use /learn to build comprehension of autonomous work")
         fi
     fi
 fi

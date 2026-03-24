@@ -55,6 +55,25 @@ if [ -f "$SCRIPT_DIR/_config-reader.sh" ]; then
     source "$SCRIPT_DIR/_config-reader.sh"
 fi
 
+# Source meta-mode detection for environment-aware paths
+source "$SCRIPT_DIR/_meta-mode.sh"
+
+# ============================================
+# TOOL-CALL COUNTER (context pressure awareness)
+# ============================================
+if [ -n "$_POST_BASH_SESSION_ID" ]; then
+    _BASH_SESSION_DIR="$(dirname "$CLAUDE_PENDING_ACTIONS")"
+    _BASH_SESSIONS_DIR="$_BASH_SESSION_DIR/.sessions"
+    mkdir -p "$_BASH_SESSIONS_DIR"
+    COUNTER_FILE="$_BASH_SESSIONS_DIR/${_POST_BASH_SESSION_ID}.tool-calls"
+    COUNT=$(cat "$COUNTER_FILE" 2>/dev/null || echo 0)
+    COUNT=$((COUNT + 1))
+    echo "$COUNT" > "$COUNTER_FILE"
+    if [ $((COUNT % 50)) -eq 0 ]; then
+        echo "Context checkpoint: $COUNT tool calls this session." >&2
+    fi
+fi
+
 # ============================================
 # DEPLOYMENT COMPLETION (CONFIG-DRIVEN)
 # ============================================
