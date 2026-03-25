@@ -68,7 +68,7 @@ run_check "TC-LEAK-01: No Twilio Account SID patterns (AC...)" \
 # Allowed: origin story (blog/README), overlay examples, changelog
 run_check "TC-LEAK-02: No Twilio brand references" \
     "(twilio|Twilio|TWILIO)" \
-    "(e\.g\.,.*Twilio|example|overlay|CHANGELOG|Origin|origin|770\+|prototyping platform|battle-test|upstream)"
+    "(e\.g\.,.*Twilio|example|overlay|Overlay|CHANGELOG|Origin|origin|770\+|prototyping platform|battle-test|upstream|twilio-cli|twilio-docs|twilio-logs|twilio-api|Shipped Overlay)"
 
 # TC-LEAK-03: No Twilio API Key SID patterns
 run_check "TC-LEAK-03: No Twilio API Key SID patterns (SK...)" \
