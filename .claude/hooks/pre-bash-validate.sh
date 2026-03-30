@@ -51,6 +51,40 @@ if echo "$COMMAND" | grep -qE "git\s+commit.*\s-n(\s|$)"; then
 fi
 
 # ============================================
+# SYMLINK LEAK PREVENTION (BLOCKING)
+# ============================================
+# Worktree setup symlinks node_modules and dist/ for efficiency.
+# If those symlinks get staged, they poison every branch on checkout.
+# Block any staged symlink (mode 120000) for a gitignored path.
+
+if echo "$COMMAND" | grep -qE "^git\s+commit"; then
+    # Check for ANY staged symlink (mode 120000) being added or present.
+    # Exclude deletions (D) - removing a tracked symlink is the fix, not the problem.
+    SYMLINKS=$(git diff --cached --diff-filter=d --raw 2>/dev/null | awk '/120000/{print $NF}')
+    if [ -z "$SYMLINKS" ]; then
+        # Also check the index directly for tracked symlinks in known-bad paths
+        SYMLINKS=$(git ls-files --stage 2>/dev/null | awk '$1 == "120000" && ($4 == "node_modules" || $4 ~ /dist/) {print $4}')
+    fi
+    if [ -n "$SYMLINKS" ]; then
+        BLOCKED=""
+        for f in $SYMLINKS; do
+            if git check-ignore -q "$f" 2>/dev/null; then
+                BLOCKED="$BLOCKED $f"
+            fi
+        done
+        if [ -n "$BLOCKED" ]; then
+            echo "" >&2
+            echo "BLOCKED: Staged symlinks for gitignored paths:$BLOCKED" >&2
+            echo "" >&2
+            echo "This usually means a worktree symlink leaked into the commit." >&2
+            echo "Fix: git rm --cached$BLOCKED" >&2
+            echo "" >&2
+            exit 2
+        fi
+    fi
+fi
+
+# ============================================
 # PRE-COMMIT DOCUMENTATION REMINDER
 # ============================================
 

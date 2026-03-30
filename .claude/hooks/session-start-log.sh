@@ -102,6 +102,25 @@ if [ -f "$PREV_START_FILE" ]; then
     fi
 fi
 
+
+# 1b. Warn if main working directory is not on 'main' branch
+# A previous session may have left the main tree on a feature branch.
+# Only applies to the main tree - worktrees are expected to be on other branches.
+if git rev-parse --is-inside-work-tree &>/dev/null; then
+    GIT_COMMON="$(git rev-parse --git-common-dir 2>/dev/null)"
+    # In a worktree, --git-common-dir contains "/worktrees/". In main tree it's just ".git".
+    if ! echo "$GIT_COMMON" | grep -q '/worktrees/'; then
+        BRANCH=$(git branch --show-current 2>/dev/null)
+        if [ -n "$BRANCH" ] && [ "$BRANCH" != "main" ]; then
+            echo "" >&2
+            echo "WARNING: Main working directory is on branch '$BRANCH', not 'main'." >&2
+            echo "A previous session may have left it here." >&2
+            echo "Consider: git checkout main" >&2
+            echo "" >&2
+        fi
+    fi
+fi
+
 # 2. Required env vars check (config-driven)
 if [ -f "$PROJECT_ROOT/.env" ]; then
     MISSING_VARS=""
@@ -153,6 +172,12 @@ fi
 # 4b. Changelog monitor (new features in Claude Code + Agent SDK)
 if [ -f "$PROJECT_ROOT/scripts/check-changelog.sh" ]; then
     bash "$PROJECT_ROOT/scripts/check-changelog.sh" --quiet 2>&1 || true
+fi
+
+
+# 4c. Dependency freshness check (7-day cache)
+if [ -f "$PROJECT_ROOT/scripts/check-deps.sh" ]; then
+    bash "$PROJECT_ROOT/scripts/check-deps.sh" --quiet 2>&1 || true
 fi
 
 # 5. Context Hub availability
