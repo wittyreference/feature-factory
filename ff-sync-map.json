@@ -287,6 +287,14 @@
           "generalize-language"
         ],
         "notes": "Recurring session checks (pending actions, doc drift, eval). Generic pattern."
+      },
+      {
+        "source": ".claude/commands/check-deps.md",
+        "target": ".claude/commands/check-deps.md",
+        "adaptations": [
+          "generalize-paths"
+        ],
+        "notes": "Dependency freshness checking \u2014 strip factory-specific package paths, keep generic npm outdated pattern"
       }
     ],
     "skills": [
@@ -424,6 +432,14 @@
           "generalize-paths"
         ],
         "notes": "Snapshots test coverage for regression detection \u2014 universal testing utility"
+      },
+      {
+        "source": "scripts/check-deps.sh",
+        "target": "scripts/check-deps.sh",
+        "adaptations": [
+          "generalize-paths"
+        ],
+        "notes": "FF version uses config-driven package directory discovery"
       }
     ],
     "references": [
@@ -474,7 +490,8 @@
       ".claude/commands/ff-sync.md",
       ".claude/commands/value-audit.md",
       ".claude/commands/help-twilio.md",
-      ".claude/commands/super-uber-validation.md"
+      ".claude/commands/super-uber-validation.md",
+      ".claude/commands/hostile-review.md"
     ],
     "twilio-only-skills": [
       ".claude/skills/voice-use-case-map.md",
@@ -486,7 +503,23 @@
       ".claude/skills/payments.md",
       ".claude/skills/media-streams.md",
       ".claude/skills/video.md",
-      ".claude/skills/validation-cookbook.md"
+      ".claude/skills/validation-cookbook.md",
+      ".claude/skills/android-sdk/SKILL.md",
+      ".claude/skills/branded-calling/SKILL.md",
+      ".claude/skills/conversationrelay/SKILL.md",
+      ".claude/skills/elastic-sip-trunking/SKILL.md",
+      ".claude/skills/event-streams/SKILL.md",
+      ".claude/skills/iam/SKILL.md",
+      ".claude/skills/ios-sdk/SKILL.md",
+      ".claude/skills/ivr-crawler/SKILL.md",
+      ".claude/skills/ivr-migrator/SKILL.md",
+      ".claude/skills/lookup/SKILL.md",
+      ".claude/skills/segment/SKILL.md",
+      ".claude/skills/sendgrid-email/SKILL.md",
+      ".claude/skills/sip/SKILL.md",
+      ".claude/skills/voice-sdks.md",
+      ".claude/skills/voice-trust/SKILL.md",
+      ".claude/skills/whatsapp-business-calling.md"
     ],
     "twilio-only-references": [
       ".claude/references/twilio-cli.md",
@@ -495,14 +528,17 @@
       ".claude/references/tool-boundaries.md",
       ".claude/references/brainstorm.md",
       ".claude/references/doc-navigator.md",
-      ".claude/references/mc-writing-style-guide-shareable.md"
+      ".claude/references/mc-writing-style-guide-shareable.md",
+      ".claude/references/event-streams-deep-crawl.md"
     ],
     "meta-only-hooks": [
       ".claude/hooks/_meta-mode.sh",
       ".claude/hooks/archive-plan.sh",
       ".claude/hooks/generate-learning-exercises.sh",
       ".claude/hooks/post-compact-summary.sh",
-      ".claude/hooks/pre-compact.sh"
+      ".claude/hooks/pre-compact.sh",
+      ".claude/hooks/__tests__/test-all-hooks.sh",
+      ".claude/hooks/__tests__/test-auto-clear.sh"
     ],
     "factory-internal-scripts": [
       "scripts/dogfood-env.sh",
@@ -521,7 +557,10 @@
       "scripts/provision-ephemeral.sh",
       "scripts/cleanup-ephemeral.sh",
       "scripts/score-validation.sh",
-      "scripts/validation-trend.sh"
+      "scripts/validation-trend.sh",
+      "scripts/aggregate-pre-ship.sh",
+      "scripts/demo-reset-blackjack.sh",
+      "scripts/pre-ship.sh"
     ],
     "deferred-hooks": [
       ".claude/hooks/worktree-setup.sh"
