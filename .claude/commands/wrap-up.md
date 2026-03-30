@@ -194,23 +194,6 @@ Actions detected by the documentation flywheel. Review before committing.
 <!-- Doc suggestions will be appended below this line by flywheel-doc-check.sh -->
 ```
 
-### 8b. Workshop Repo Status (meta mode only)
-
-If `.meta/` is a symlink to a separate git repo, check for unsaved work:
-
-```bash
-if [ -L "$PROJECT_ROOT/.meta" ]; then
-    WORKSHOP_DIR=$(readlink -f "$PROJECT_ROOT/.meta" 2>/dev/null || readlink "$PROJECT_ROOT/.meta")
-    cd "$WORKSHOP_DIR"
-    git status --porcelain 2>/dev/null | wc -l | tr -d ' '  # uncommitted
-    git log --oneline '@{upstream}..HEAD' 2>/dev/null | wc -l | tr -d ' '  # unpushed
-fi
-```
-
-If uncommitted or unpushed changes exist, prompt: "Commit workshop changes? (`cd .meta && git add -A && git commit -m 'session: ...' && git push`)"
-
-Skip silently if `.meta/` is not a symlink or no issues found.
-
 ### 9. Summary
 
 Output what was updated:
@@ -224,22 +207,12 @@ Output what was updated:
 ### Docs Updated
 - [list of files modified with brief reason]
 
-### Distribution Drift
-- Feature-factory: [N files drifted / in sync] — [run /ff-sync if needed]
-
 ### Todo
 - [items checked off or updated]
 
 ### Ready to Commit
 [yes/no — and what to commit]
 ```
-
-For the Distribution Drift section, run:
-```bash
-./scripts/ff-drift-check.sh --count 2>/dev/null || echo "0"
-```
-
-If the count is 0, report "in sync" and move on. If drift exists, include the count and suggest running the appropriate sync command.
 
 ## Notes
 
@@ -252,3 +225,4 @@ If the count is 0, report "in sync" and move on. If drift exists, include the co
 <user_request>
 $ARGUMENTS
 </user_request>
+</output>

@@ -7,13 +7,14 @@ This document describes the available workflow patterns for developing features 
 | Command | Role | Description |
 |---------|------|-------------|
 | `/architect` | Architect | Design review, pattern selection, unknowns identification — pipeline entry point |
-| `/prototype` | Prototyper | Quick spike to test unknowns -- no tests, produces learnings |
+| `/prototype` | Prototyper | Quick spike to test unknowns — no tests, produces learnings |
 | `/spec` | Specification Writer | Creates detailed technical specifications |
 | `/test-gen` | Test Generator | TDD Red Phase - writes failing tests first |
 | `/dev` | Developer | TDD Green Phase - implements to pass tests |
 | `/review` | Senior Developer | Code review, security audit, approval authority |
 | `/test` | Test Runner | Executes and validates test suites |
 | `/docs` | Technical Writer | Documentation updates and maintenance |
+| `/deploy` | Deployment Helper | Pre/post deployment checks |
 
 ## Workflow Patterns
 
@@ -25,9 +26,7 @@ Full development pipeline for building new functionality:
 /architect ──► /prototype (if unknowns) ──► /spec ──► /test-gen ──► /dev ──► /review ──► /test ──► /docs
 ```
 
-**Start with**: `/architect [feature]`
-
-**Manual execution**:
+**Execution**:
 
 1. `/architect [feature]` - Get architecture review, identify unknowns
 2. `/prototype [unknowns]` - Quick spike to test unfamiliar APIs *(skip if no unknowns)*
@@ -46,15 +45,14 @@ Quick fix pipeline for resolving issues:
 /architect ──► /test-gen ──► /dev ──► /review ──► /test
 ```
 
-**Start with**: Analyze logs to identify the issue
+**Execution**:
 
-**Manual execution**:
-
-1. `/architect [diagnosis]` - Determine fix approach
-2. `/test-gen [regression]` - Write regression tests
-3. `/dev [fix]` - Implement the fix
-4. `/review` - Validate the fix
-5. `/test` - Verify all tests pass
+1. Analyze logs to identify the issue
+2. `/architect [diagnosis]` - Determine fix approach
+3. `/test-gen [regression]` - Write regression tests
+4. `/dev [fix]` - Implement the fix
+5. `/review` - Validate the fix
+6. `/test` - Verify all tests pass
 
 ### Refactor Pipeline
 
@@ -64,9 +62,7 @@ Improve code structure without changing behavior:
 /test ──► /architect ──► /dev ──► /review ──► /test
 ```
 
-**Start with**: `/test` to establish baseline
-
-**Manual execution**:
+**Execution**:
 
 1. `/test` - Verify existing tests pass (baseline)
 2. `/architect [refactor plan]` - Design the refactoring approach
@@ -82,9 +78,7 @@ Update documentation without code changes:
 /docs
 ```
 
-**Start with**: `/docs [scope]`
-
-**Manual execution**:
+**Execution**:
 
 1. `/docs [scope]` - Update specified documentation
 
@@ -96,9 +90,7 @@ Review code for security issues:
 /review ──► /dev ──► /test
 ```
 
-**Start with**: `/review security [scope]`
-
-**Manual execution**:
+**Execution**:
 
 1. `/review security [scope]` - Security-focused code review
 2. `/dev [fixes]` - Implement security fixes (if needed)

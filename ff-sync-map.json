@@ -529,7 +529,8 @@
       ".claude/references/brainstorm.md",
       ".claude/references/doc-navigator.md",
       ".claude/references/mc-writing-style-guide-shareable.md",
-      ".claude/references/event-streams-deep-crawl.md"
+      ".claude/references/event-streams-deep-crawl.md",
+      ".claude/references/adversarial-validation.md"
     ],
     "meta-only-hooks": [
       ".claude/hooks/_meta-mode.sh",

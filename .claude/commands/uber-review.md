@@ -16,7 +16,7 @@ Nine reviewer personas across three passes (27 total reviews):
 |----------|---------|-------|
 | **Architect** | Senior architect at a technology company | Architecture, claims validation, demo risks |
 | **Test Engineer** | QA/test automation specialist (10yr) | Test quality, assertions, isolation, coverage gaps, enforcement |
-| **Tech Writer** | Senior technical writer (15yr) | Information architecture, audience clarity, Diátaxis assessment |
+| **Tech Writer** | Senior technical writer (15yr) | Information architecture, audience clarity, Diataxis assessment |
 | **Security** | Application security engineer | Credentials, injection surfaces, auth model, API auth |
 | **DevEx** | Developer experience engineer | Onboarding friction, error messages, time-to-first-success |
 | **SRE** | Platform SRE / operations engineer | Failure modes, resource lifecycle, observability, deployment safety |
@@ -352,7 +352,17 @@ Source exclusively from arbiter "Definitive Recommendations." Deduplicate across
 | Instruction Clarity | | | | |
 | **Overall** | **(avg)** | **(avg)** | | |
 
-#### 7. Review Process Insights
+#### 7. Recurrence Analysis
+
+If `findingHistory` exists in the state file, identify recurring findings — issues that have appeared in 2+ runs without being resolved. Highlight patterns where the same feedback keeps surfacing.
+
+| Finding | First Seen | Occurrences | Severity | Status |
+|---------|-----------|-------------|----------|--------|
+| [title] | [run-id] | [count] | [severity] | Recurring / Resolved |
+
+If this is the first run or no recurrences exist, note "First run — no recurrence data yet."
+
+#### 8. Review Process Insights
 
 **Where Critical Review Added Most Value**: Domains where the critical reviewer's challenge materially changed the final assessment.
 
@@ -403,11 +413,21 @@ Read `.meta/review-reports/state/uber-review-history.json` if it exists. Schema:
   "lastRun": "2026-03-22-120407",
   "issueMappings": {
     "fingerprint-slug": { "issue": 51, "state": "open" }
+  },
+  "findingHistory": {
+    "fingerprint-slug": {
+      "firstSeen": "2026-03-20-143052",
+      "lastSeen": "2026-03-22-120407",
+      "occurrences": 3,
+      "runs": ["2026-03-20-143052", "2026-03-21-091500", "2026-03-22-120407"],
+      "severity": "high",
+      "title": "Protect public endpoints"
+    }
   }
 }
 ```
 
-If the file doesn't exist, start with `{ "lastRun": null, "issueMappings": {} }`.
+If the file doesn't exist, start with `{ "lastRun": null, "issueMappings": {}, "findingHistory": {} }`.
 
 #### Step 3: Parse synthesis Priority Action Items
 
@@ -464,6 +484,10 @@ Read the synthesis file. Extract each numbered action item from the Priority Act
    ```
 
 4. **Record mapping**: Add `fingerprint → { issue: N, state: "open" }` to `issueMappings`.
+
+5. **Update finding history**: For each finding (regardless of whether an issue was created):
+   - If fingerprint exists in `findingHistory`: increment `occurrences`, append run-id to `runs`, update `lastSeen` and `severity`
+   - If fingerprint is new: create entry with `firstSeen: run-id`, `lastSeen: run-id`, `occurrences: 1`, `runs: [run-id]`, `severity`, and `title`
 
 #### Step 6: Save state file
 
