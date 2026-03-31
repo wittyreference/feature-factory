@@ -1,5 +1,5 @@
 # ABOUTME: Development workflow patterns — which pipeline phases to run for each task type.
-# ABOUTME: Reference doc extracted from the former /orchestrate command.
+# ABOUTME: Reference doc for selecting the right pipeline phases per task type.
 
 # Development Workflow Patterns
 

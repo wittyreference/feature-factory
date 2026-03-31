@@ -34,7 +34,7 @@ Unified context management skill — fundamentals, compression techniques, and s
 | New module | Pattern file + domain CLAUDE.md |
 | Feature with tests | 2-3 files max |
 | Complex refactor | 4-5 files, summarized |
-| Full workflow | Use orchestrator, load per-phase |
+| Full workflow | Use plan mode, load per-phase |
 
 ## Loading Strategy
 
