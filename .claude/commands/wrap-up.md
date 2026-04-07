@@ -11,8 +11,8 @@ Review the current session's work and update all relevant documentation before c
 ### 1. Gather Session Context
 
 Determine environment:
-- If `.meta/` exists → meta-development mode (learnings: `.meta/learnings.md`, pending: `.meta/pending-actions.md`, todo: `.meta/todo.md`)
-- Otherwise → standard mode (learnings: `.claude/learnings.md`, pending: `.claude/pending-actions.md`, todo: `todo.md`)
+- If `.meta/` exists → meta-development mode (learnings: `.meta/learnings.md`, pending: `.meta/pending-actions.json`, todo: `.meta/todo.md`)
+- Otherwise → standard mode (learnings: `.claude/learnings.md`, pending: `.claude/pending-actions.json`, todo: `todo.md`)
 
 Collect what changed this session:
 ```bash
@@ -95,6 +95,26 @@ For each changed file, determine if documentation needs updating:
 
 Only update docs where the session's changes actually warrant it. Don't touch docs for unrelated areas.
 
+### 3b. Learning Promotion Proposals
+
+Check `pending-actions.json` for entries with `"type": "learning-promotion"`:
+
+```bash
+jq '[.[] | select(.type == "learning-promotion")]' .meta/pending-actions.json 2>/dev/null || echo "No promotion proposals"
+```
+
+For each proposal:
+1. Read the `proposedContent` and `targetFile`
+2. Verify the content is accurate and worth promoting (not a one-off or misleading)
+3. If approved: add the content to the target CLAUDE.md file in the appropriate section (usually Gotchas or Troubleshooting)
+4. Mark as promoted: the LearningCaptureEngine tracks this via pattern ID
+5. If rejected: remove the entry from pending-actions.json
+
+Promotion criteria (automated pipeline already filters, but verify):
+- Pattern seen 3+ times across 2+ sessions
+- Pattern was resolved (a fix worked)
+- Content isn't already in the target file
+
 ### 4. Sync Auto-Memory and Shipped Docs
 
 **Promote outward**: Check auto-memory for entries that should be in shipped docs:
@@ -133,16 +153,57 @@ Example:
 
 ### 5. Update Todo
 
-If the session completed or progressed a tracked task, update the todo file.
+Read the todo file and reconcile it against this session's actual work.
+
+**Determine todo path:**
+- If `.meta/` exists → `.meta/todo.md`
+- Otherwise → `todo.md`
+
+**Cross-reference session work against todo:**
+
+1. Read the full todo file
+2. Gather what was done this session:
+   ```bash
+   # Files changed
+   git diff --name-only HEAD
+   # Commits made
+   SESSION_DIR={session-dir}
+   SESSION_START=$(ls -t "$SESSION_DIR"/.sessions/*.start 2>/dev/null | head -1 | xargs cat 2>/dev/null)
+   if [ -z "$SESSION_START" ]; then
+       SESSION_START=$(cat "$SESSION_DIR/.session-start" 2>/dev/null)
+   fi
+   git log --since="@${SESSION_START}" --format='%h %s' 2>/dev/null
+   ```
+3. For each todo section, check if this session's work touches it:
+   - **Checkboxes completed** → tick them: `- [ ]` → `- [x]`
+   - **Section fully done** → change header from `IN PROGRESS` to `DONE`, add completion date
+   - **Partial progress** → add a note under the section (e.g., "Step 2 of 5 done — deployed but not yet wired")
+   - **Key numbers changed** → update counts, dates in the "Key Numbers" block
+   - **New blockers discovered** → add them as unchecked items in the relevant section
+   - **New work items discovered** → add to the appropriate tier (don't create a new section if it fits an existing one)
+
+**What NOT to do:**
+- Don't reorganize or reformat sections you didn't touch
+- Don't move items between tiers unless the session's work changed the effort/ROI assessment
+- Don't remove DONE sections (they serve as history until the next archival pass)
+- Don't update items unrelated to this session's work
+
+**Report in the summary** (step 9): list every checkbox ticked, status changed, or item added, so the user can verify.
 
 ### 5b. Generate Learning Exercises
 
-If significant code was produced this session (especially from autonomous work via headless or `/team`), check for and generate learning exercises:
+Generate learning exercises from two sources:
 
+**Code exercises** (from autonomous work):
 1. Check if `.meta/learning/session-log.jsonl` has events
 2. If so, run the exercise generation: `bash .claude/hooks/generate-learning-exercises.sh`
-3. Report how many exercises were generated for the next interactive session
-4. If no events were logged, skip this step
+3. Report how many code exercises were generated
+
+**Knowledge exercises** (from project evolution):
+The generation hook also scans for new design decisions, learnings, and validation reports that appeared since the last generation run (tracked in `.meta/learning/generation-state.json`). These produce decision deep-dive, gotcha prediction, and diagnosis exercises.
+
+4. Report total exercises generated (code + knowledge) for the next interactive session
+5. Remind: "Use `/learn status` to see coverage across all knowledge areas"
 
 ### 6. Context Budget Check
 

@@ -251,6 +251,31 @@ if [ "$SKIP_CREDENTIALS" = "false" ]; then
 fi
 
 # ============================================
+# MARKDOWN CREDENTIAL CHECK
+# ============================================
+# .md files are exempt from SID checks (credential patterns appear in format docs),
+# but we still catch ACTUAL credential values — 32-char hex strings
+# directly assigned to credential keywords. This catches real tokens
+# leaked into test-results.md or similar documentation files.
+# Pattern: keyword followed by separator then a quoted 32-char hex value
+# e.g., auth_token: "ff5711..." or secret = "abc123..."
+
+if [[ "$FILE_PATH" =~ \.md$ ]] && [ -n "$CONTENT" ]; then
+    if echo "$CONTENT" | grep -qiE '(auth_token|_secret|password|authtoken)["'"'"'"]?[[:space:]]*[:=][[:space:]]*["'"'"'"][a-f0-9]{32}["'"'"'"]'; then
+        echo "BLOCKED: Possible credential value in markdown file!" >&2
+        echo "" >&2
+        echo "Found a 32-character hex string adjacent to a credential keyword" >&2
+        echo "in: $FILE_PATH" >&2
+        echo "" >&2
+        echo "If this is a real credential, replace it with [REDACTED] or a placeholder." >&2
+        echo "If this is a format example, use a clearly fake value like:" >&2
+        echo "  a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4" >&2
+        echo "" >&2
+        exit 2
+    fi
+fi
+
+# ============================================
 # PROMPT INJECTION HEURISTIC CHECK
 # ============================================
 
