@@ -590,10 +590,6 @@
     "factory-internal-hooks": [
       ".claude/hooks/permission-denied.sh",
       ".claude/hooks/permission-denied.sh"
-    ],
-    "factory-internal-references": [
-      ".claude/references/mc-writing-style-guide-shareable.md",
-      ".claude/references/mc-writing-style-guide-shareable.md"
     ]
   }
 }
