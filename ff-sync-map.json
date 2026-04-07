@@ -139,10 +139,22 @@
         ]
       },
       {
+        "source": ".claude/hooks/_platform.sh",
+        "target": ".claude/hooks/_platform.sh",
+        "adaptations": [],
+        "notes": "Cross-platform shell helpers (portable sed, stat, date, realpath, notifications, jq hints). No platform-specific content."
+      },
+      {
+        "source": ".claude/hooks/_platform.sh",
+        "target": ".claude/hooks/_platform.sh",
+        "adaptations": [],
+        "notes": "Cross-platform shell helpers (portable sed, stat, date, realpath, notifications, jq hints). No platform-specific content."
+      },
+      {
         "source": ".claude/hooks/_safety-patterns.sh",
         "target": ".claude/hooks/_safety-patterns.sh",
         "adaptations": [],
-        "notes": "Prompt injection detection patterns \u2014 universal safety, no platform-specific content"
+        "notes": "Prompt injection detection patterns — universal safety, no platform-specific content"
       },
       {
         "source": ".claude/hooks/_emit-event.sh",
@@ -150,7 +162,7 @@
         "adaptations": [
           "use-config-reader"
         ],
-        "notes": "JSONL event emitter. Hooks that emit events are already shipped \u2014 this helper must ship too."
+        "notes": "JSONL event emitter. Hooks that emit events are already shipped — this helper must ship too."
       }
     ],
     "commands": [
@@ -294,7 +306,7 @@
         "adaptations": [
           "generalize-paths"
         ],
-        "notes": "Dependency freshness checking \u2014 strip factory-specific package paths, keep generic npm outdated pattern"
+        "notes": "Dependency freshness checking — strip factory-specific package paths, keep generic npm outdated pattern"
       }
     ],
     "skills": [
@@ -387,7 +399,7 @@
           "strip-twilio-services",
           "generalize-language"
         ],
-        "notes": "Workflow failure diagnosis \u2014 stalled agents, hook blocks, session state. Twilio MCP refs stripped."
+        "notes": "Workflow failure diagnosis — stalled agents, hook blocks, session state. Twilio MCP refs stripped."
       }
     ],
     "workflows": [
@@ -423,7 +435,7 @@
         "source": ".envrc",
         "target": "scripts/envrc.template",
         "adaptations": [],
-        "notes": "Generic template \u2014 users customize unset list for their platform"
+        "notes": "Generic template — users customize unset list for their platform"
       },
       {
         "source": "scripts/save-coverage-baseline.sh",
@@ -431,7 +443,7 @@
         "adaptations": [
           "generalize-paths"
         ],
-        "notes": "Snapshots test coverage for regression detection \u2014 universal testing utility"
+        "notes": "Snapshots test coverage for regression detection — universal testing utility"
       },
       {
         "source": "scripts/check-deps.sh",
@@ -465,7 +477,7 @@
         "adaptations": [
           "generalize-language"
         ],
-        "notes": "Pipeline routing logic \u2014 determines which workflow to use (bug fix, feature, refactor, docs)"
+        "notes": "Pipeline routing logic — determines which workflow to use (bug fix, feature, refactor, docs)"
       },
       {
         "source": ".claude/references/model-bump-checklist.md",
@@ -473,7 +485,7 @@
         "adaptations": [
           "generalize-paths"
         ],
-        "notes": "Systematic model capability assessment \u2014 no platform-specific content"
+        "notes": "Systematic model capability assessment — no platform-specific content"
       }
     ]
   },
@@ -528,7 +540,6 @@
       ".claude/references/tool-boundaries.md",
       ".claude/references/brainstorm.md",
       ".claude/references/doc-navigator.md",
-      ".claude/references/mc-writing-style-guide-shareable.md",
       ".claude/references/event-streams-deep-crawl.md",
       ".claude/references/adversarial-validation.md"
     ],
@@ -569,6 +580,16 @@
     "deferred-commands": [
       ".claude/commands/worktree-start.md"
     ],
-    "reason": "Twilio-specific items live in twilio-overlay/. Meta-only hooks are factory dev infrastructure. Factory-internal scripts are specific to the Twilio factory repo."
+    "reason": "Twilio-specific items live in twilio-overlay/. Meta-only hooks are factory dev infrastructure. Factory-internal scripts are specific to the Twilio factory repo.",
+    "factory-internal-commands": [
+      ".claude/commands/ff-updates.md",
+      ".claude/commands/private-sync.md",
+      ".claude/commands/ff-updates.md",
+      ".claude/commands/private-sync.md"
+    ],
+    "factory-internal-hooks": [
+      ".claude/hooks/permission-denied.sh",
+      ".claude/hooks/permission-denied.sh"
+    ]
   }
 }

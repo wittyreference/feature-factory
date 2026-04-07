@@ -121,6 +121,19 @@ if git rev-parse --is-inside-work-tree &>/dev/null; then
     fi
 fi
 
+# 1c. Worktree advisory for write sessions
+# Non-blocking — just sets expectations early so the agent knows writes will be blocked.
+if git rev-parse --is-inside-work-tree &>/dev/null; then
+    _SS_GIT_COMMON="$(git rev-parse --git-common-dir 2>/dev/null)"
+    if ! echo "$_SS_GIT_COMMON" | grep -q '/worktrees/'; then
+        echo "" >&2
+        echo "NOTE: This session is on the main tree. If you plan to write code" >&2
+        echo "or commit, run /worktree-start first. Writes to repo files and" >&2
+        echo "git commit are blocked on the main tree (worktree isolation enforced)." >&2
+        echo "" >&2
+    fi
+fi
+
 # 2. Required env vars check (config-driven)
 if [ -f "$PROJECT_ROOT/.env" ]; then
     MISSING_VARS=""
@@ -162,6 +175,14 @@ if [ "$CLAUDE_META_MODE" = "true" ] && [ -n "$CLAUDE_LEARNING_DIR" ] && [ -d "$C
 }
 STATEEOF
     fi
+fi
+
+# --- Skip expensive checks in CI (GitHub Actions, headless -p mode) ---
+# CI sets CI=true. Headless mode can set CLAUDE_HEADLESS=true.
+# These checks are for interactive sessions — CI has its own validation pipeline.
+if [ "${CI:-}" = "true" ] || [ "${CLAUDE_HEADLESS:-}" = "true" ]; then
+    echo "CI/headless mode — skipping update checks, smoke tests." >&2
+    exit 0
 fi
 
 # 4. Update check (quiet mode — only prints if update available)

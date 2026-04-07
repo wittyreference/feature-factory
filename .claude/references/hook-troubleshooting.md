@@ -21,6 +21,7 @@ When a hook blocks your action, this guide tells you why and how to fix it.
 | `archive-plan.sh` | Stop | Archives current plan file with dedup |
 | `notify-ready.sh` | Stop | Desktop notification when Claude finishes |
 | `subagent-log.sh` | SubagentStop | Doc update reminder after subagent work |
+| `permission-denied.sh` | PermissionRequest | Logs auto-mode denials, retries known-safe writes |
 | `task-completed-check.sh` | TaskCompleted | TDD/coverage/credential verification |
 | `teammate-idle-check.sh` | TeammateIdle | TDD/lint/coverage gate for team agents |
 | `generate-learning-exercises.sh` | PostToolUse | Creates learning exercises from session logs |

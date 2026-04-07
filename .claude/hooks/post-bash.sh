@@ -57,6 +57,8 @@ fi
 
 # Source meta-mode detection for environment-aware paths
 source "$SCRIPT_DIR/_meta-mode.sh"
+# Cross-platform helpers (portable notifications, etc.)
+source "$SCRIPT_DIR/_platform.sh"
 
 # ============================================
 # TOOL-CALL COUNTER (context pressure awareness)
@@ -81,16 +83,14 @@ fi
 DEPLOY_CMD=$(ff_config ".deployment.command" "" 2>/dev/null)
 if [ -n "$DEPLOY_CMD" ] && echo "$COMMAND" | grep -qF "$DEPLOY_CMD"; then
     echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "Deployment command completed."
     echo "Check the output above for deployed URLs."
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
 
-    # Send desktop notification
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        osascript -e 'display notification "Deployment complete - check terminal for URLs" with title "Claude Code" sound name "Hero"' 2>/dev/null || true
-    elif command -v notify-send &> /dev/null; then
-        notify-send "Claude Code" "Deployment complete" 2>/dev/null || true
-    fi
+    # Send desktop notification (cross-platform)
+    notify_desktop "Claude Code" "Deployment complete - check terminal for URLs"
 fi
 
 # ============================================

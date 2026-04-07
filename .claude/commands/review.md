@@ -44,6 +44,7 @@ Provide clear APPROVED, NEEDS_CHANGES, or REJECTED decision.
 - [ ] No temporal comments ("new", "improved", "recently changed")
 - [ ] Comments are evergreen and describe code as-is
 - [ ] No unused code or dead imports
+- [ ] No console.error or console.warn statements (use proper error handling)
 
 ### TDD Compliance
 
@@ -66,6 +67,7 @@ Provide clear APPROVED, NEEDS_CHANGES, or REJECTED decision.
 
 ### Performance
 
+- [ ] Function executes within reasonable timeout limits
 - [ ] No unnecessary API calls or database queries
 - [ ] Efficient loops and data structures
 - [ ] No blocking operations without timeout
@@ -76,6 +78,7 @@ Provide clear APPROVED, NEEDS_CHANGES, or REJECTED decision.
 - [ ] CLAUDE.md files updated if architecture changed
 - [ ] README updated if setup steps changed
 - [ ] Complex logic has inline comments explaining "why"
+- [ ] API documentation updated for new endpoints
 
 ---
 
@@ -130,10 +133,27 @@ Provide clear APPROVED, NEEDS_CHANGES, or REJECTED decision.
 - **Impact**: Why it matters
 - **Suggestion**: How to fix
 
+### [MAJOR] Issue Title
+- **Location**: `file:line`
+- **Description**: What the issue is
+- **Suggestion**: How to fix
+
+### [MINOR] Issue Title
+- **Location**: `file:line`
+- **Suggestion**: Quick fix
+
 ---
 
 ## Approved Items
 - [Something done well]
+- [Good pattern used]
+- [Effective test coverage]
+
+---
+
+## Suggestions (Non-blocking)
+- [Optional improvement 1]
+- [Optional improvement 2]
 
 ---
 
@@ -144,6 +164,9 @@ Ready to merge. Run `/test` for final validation, then `/docs` if documentation 
 
 [If NEEDS_CHANGES]:
 Address the BLOCKING and MAJOR issues above, then re-run `/review`.
+
+[If REJECTED]:
+[Explanation of fundamental issues requiring redesign]
 ```
 
 ---
@@ -151,13 +174,31 @@ Address the BLOCKING and MAJOR issues above, then re-run `/review`.
 ## Decision Guidelines
 
 ### APPROVED
-All checklists pass, no BLOCKING or MAJOR issues.
+
+All checklists pass, no BLOCKING or MAJOR issues:
+
+- Tests exist and pass
+- Code follows standards
+- Security checklist passes
+- TDD compliance verified
 
 ### NEEDS_CHANGES
-One or more fixable issues (missing ABOUTME, test gaps, style inconsistencies).
+
+One or more fixable issues:
+
+- Missing ABOUTME comment
+- Test coverage gaps
+- Minor security concerns
+- Style inconsistencies
 
 ### REJECTED
-Fundamental issues requiring redesign (no tests, hardcoded credentials, architectural problems).
+
+Fundamental issues requiring redesign:
+
+- No tests (TDD violation)
+- Hardcoded credentials
+- Architectural problems
+- Security vulnerabilities
 
 ---
 
@@ -172,6 +213,8 @@ Ready for:
 - `/test` - Final test suite validation
 - `/docs` - Documentation update (if needed)
 - Merge to main branch
+
+Ready to push? Use /push.
 ```
 
 ### After NEEDS_CHANGES

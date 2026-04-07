@@ -274,12 +274,11 @@ detect_source_dirs() {
             [ -d "$TARGET_DIR/cmd" ] && dirs="cmd/"
             [ -d "$TARGET_DIR/internal" ] && dirs="$dirs internal/"
             [ -d "$TARGET_DIR/pkg" ] && dirs="$dirs pkg/"
-            # Flat-layout Go repos have source at root (e.g., gin-gonic/gin)
-            if [ -z "$(echo "$dirs" | xargs)" ]; then
-                if ls "$TARGET_DIR"/*.go &>/dev/null; then
-                    dirs="./"
-                fi
+            # Also include root if .go files exist there (e.g., gin has both internal/ and root .go files)
+            if ls "$TARGET_DIR"/*.go &>/dev/null; then
+                dirs="$dirs ./"
             fi
+            # Fallback: if nothing found at all, default will kick in below
             ;;
         rust)
             if [ -f "$TARGET_DIR/Cargo.toml" ] && grep -q '\[workspace\]' "$TARGET_DIR/Cargo.toml"; then
@@ -334,6 +333,19 @@ detect_test_dirs() {
     echo "$dirs"
 }
 
+detect_test_file_patterns() {
+    local lang="$1"
+    case "$lang" in
+        javascript) echo '["**/*.test.*", "**/*.spec.*", "__tests__/**", "tests/**"]' ;;
+        python) echo '["**/test_*.py", "**/*_test.py", "tests/**", "test/**"]' ;;
+        go) echo '["**/*_test.go"]' ;;
+        rust) echo '["**/tests/**", "**/*_test.rs"]' ;;
+        java) echo '["**/*Test.java", "**/*Spec.java", "**/test/**"]' ;;
+        ruby) echo '["**/*_test.rb", "**/*_spec.rb", "test/**", "spec/**"]' ;;
+        *) echo '["**/*.test.*", "**/*.spec.*", "**/*_test.*", "tests/**", "__tests__/**"]' ;;
+    esac
+}
+
 detect_file_extensions() {
     local lang="$1"
     case "$lang" in
@@ -365,6 +377,7 @@ LINT_CMD=$(detect_lint_command "$LANG")
 LINT_FIX_CMD=$(detect_lint_fix_command "$LANG")
 COVERAGE_CMD=$(detect_coverage_command "$LANG")
 SOURCE_DIRS=$(detect_source_dirs "$LANG")
+TEST_FILE_PATTERNS=$(detect_test_file_patterns "$LANG")
 TEST_DIRS=$(detect_test_dirs "$LANG")
 FILE_EXTS=$(detect_file_extensions "$LANG")
 COMMENT_SYN=$(detect_comment_syntax "$LANG")
@@ -460,6 +473,13 @@ for file in "$FF_ROOT/.claude/commands"/*; do
 done
 echo ""
 
+# --- Rules ---
+if [ -d "$FF_ROOT/.claude/rules" ]; then
+    echo "Installing rules..."
+    copy_dir "$FF_ROOT/.claude/rules" "$TARGET_DIR/.claude/rules"
+    echo ""
+fi
+
 # --- Skills ---
 echo "Installing skills..."
 copy_dir "$FF_ROOT/.claude/skills" "$TARGET_DIR/.claude/skills"
@@ -537,7 +557,7 @@ else
     "command": "$TEST_CMD",
     "coverageCommand": "$COVERAGE_CMD",
     "coverageThreshold": 80,
-    "testFilePatterns": ["**/*.test.*", "**/*.spec.*", "**/*_test.go", "__tests__/**", "tests/**"]
+    "testFilePatterns": $TEST_FILE_PATTERNS
   },
   "linting": {
     "command": "$LINT_CMD",
