@@ -172,7 +172,8 @@
         "adaptations": [
           "strip-twilio-services",
           "generalize-patterns"
-        ]
+        ],
+        "notes": "Context Engineering step 6 (operational gotchas) must be generalized: replace hardcoded '.claude/references/operational-gotchas.md' with pattern-matching for project-level gotcha files (operational-gotchas.md, GOTCHAS.md, docs/gotchas.md)"
       },
       {
         "source": ".claude/commands/spec.md",
