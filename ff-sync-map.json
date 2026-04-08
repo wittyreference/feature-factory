@@ -504,7 +504,8 @@
       ".claude/commands/value-audit.md",
       ".claude/commands/help-twilio.md",
       ".claude/commands/super-uber-validation.md",
-      ".claude/commands/hostile-review.md"
+      ".claude/commands/hostile-review.md",
+      ".claude/commands/dashboard.md"
     ],
     "twilio-only-skills": [
       ".claude/skills/voice-use-case-map.md",
@@ -573,7 +574,12 @@
       "scripts/validation-trend.sh",
       "scripts/aggregate-pre-ship.sh",
       "scripts/demo-reset-blackjack.sh",
-      "scripts/pre-ship.sh"
+      "scripts/pre-ship.sh",
+      "scripts/run-benchmark.sh",
+      "scripts/_draw.sh"
+    ],
+    "deferred-scripts": [
+      "scripts/worktree-status.sh"
     ],
     "deferred-hooks": [
       ".claude/hooks/worktree-setup.sh"
