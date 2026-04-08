@@ -12,7 +12,7 @@ Every pattern in this toolkit was earned through real bugs, real oversights, and
 
 ## What's Inside
 
-### 15 Event-Driven Hooks
+### 20 Event-Driven Hooks
 
 Hooks fire automatically on Claude Code events (file writes, bash commands, session lifecycle). They enforce quality without requiring you to remember to run checks.
 
@@ -34,10 +34,14 @@ Hooks fire automatically on Claude Code events (file writes, bash commands, sess
 | `notify-ready` | Claude responds | Desktop notification (macOS/Linux) with pending action count |
 | `subagent-log` | Subagent completes | Triggers flywheel and learning exercise generation |
 | `_meta-mode` | (helper) | Detects `.meta/` directory, routes session files accordingly |
+| `_config-reader` | (helper) | Reads `ff.config.json` with jq, provides defaults |
+| `_emit-event` | (helper) | JSONL structured event emitter for observability |
+| `_platform` | (helper) | Cross-platform helpers (portable sed, stat, date, notifications) |
+| `_safety-patterns` | (helper) | Heuristic prompt injection detection for pre-write hooks |
 
 All hooks read configuration from `ff.config.json` — no hardcoded platform assumptions.
 
-### 18 Slash Commands
+### 20 Slash Commands
 
 Commands are specialized subagent roles invoked with `/command-name`.
 
@@ -77,8 +81,11 @@ Commands are specialized subagent roles invoked with `/command-name`.
 | `/ff-sync` | Detect and reconcile drift between upstream and local |
 | `/recall` | Search and recall context from previous sessions |
 | `/prototype` | Spike / proof-of-concept exploration |
+| `/check-deps` | Check for outdated dependencies |
+| `/session-crons` | Register recurring checks for long sessions |
+| `/uber-review` | Parallel multi-persona code review |
 
-### 11 Knowledge Skills
+### 12 Knowledge Skills
 
 Skills are reference documents Claude loads on demand for specialized knowledge.
 
@@ -95,6 +102,7 @@ Skills are reference documents Claude loads on demand for specialized knowledge.
 | `hooks-reference` | Complete reference for all hooks |
 | `context-hub` | External API reference loader, contextual knowledge |
 | `env-doctor` | Environment conflict detection and resolution |
+| `factory-triage` | Diagnostic triage for Feature Factory issues |
 
 ## Quick Start
 
@@ -349,9 +357,9 @@ Install into a Twilio project:
 ```
 your-project/
   .claude/
-    hooks/           # 15 event-driven hooks (auto-fire on Claude Code events)
-    commands/        # 18 slash commands (/architect, /dev, /test-gen, etc.)
-    skills/          # 11 knowledge documents (loaded on demand)
+    hooks/           # 20 event-driven hooks (auto-fire on Claude Code events)
+    commands/        # 20 slash commands (/architect, /dev, /test-gen, etc.)
+    skills/          # 12 knowledge documents (loaded on demand)
     rules/           # Declarative agent rules
     references/      # Documentation maps
     settings.json    # Hook registrations and environment config
