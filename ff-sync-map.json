@@ -154,7 +154,7 @@
         "source": ".claude/hooks/_safety-patterns.sh",
         "target": ".claude/hooks/_safety-patterns.sh",
         "adaptations": [],
-        "notes": "Prompt injection detection patterns — universal safety, no platform-specific content"
+        "notes": "Prompt injection detection patterns \u2014 universal safety, no platform-specific content"
       },
       {
         "source": ".claude/hooks/_emit-event.sh",
@@ -162,7 +162,7 @@
         "adaptations": [
           "use-config-reader"
         ],
-        "notes": "JSONL event emitter. Hooks that emit events are already shipped — this helper must ship too."
+        "notes": "JSONL event emitter. Hooks that emit events are already shipped \u2014 this helper must ship too."
       }
     ],
     "commands": [
@@ -307,7 +307,21 @@
         "adaptations": [
           "generalize-paths"
         ],
-        "notes": "Dependency freshness checking — strip factory-specific package paths, keep generic npm outdated pattern"
+        "notes": "Dependency freshness checking \u2014 strip factory-specific package paths, keep generic npm outdated pattern"
+      },
+      {
+        "source": ".claude/commands/check-vulns.md",
+        "target": ".claude/commands/check-vulns.md",
+        "adaptations": [],
+        "notes": "Vulnerability scanning \u2014 generic npm audit pattern, no platform-specific content"
+      },
+      {
+        "source": ".claude/commands/ship.md",
+        "target": ".claude/commands/ship.md",
+        "adaptations": [
+          "generalize-paths"
+        ],
+        "notes": "Full lifecycle: commit, PR, CI, merge, exit worktree"
       }
     ],
     "skills": [
@@ -400,7 +414,7 @@
           "strip-twilio-services",
           "generalize-language"
         ],
-        "notes": "Workflow failure diagnosis — stalled agents, hook blocks, session state. Twilio MCP refs stripped."
+        "notes": "Workflow failure diagnosis \u2014 stalled agents, hook blocks, session state. Twilio MCP refs stripped."
       }
     ],
     "workflows": [
@@ -436,7 +450,7 @@
         "source": ".envrc",
         "target": "scripts/envrc.template",
         "adaptations": [],
-        "notes": "Generic template — users customize unset list for their platform"
+        "notes": "Generic template \u2014 users customize unset list for their platform"
       },
       {
         "source": "scripts/save-coverage-baseline.sh",
@@ -444,7 +458,7 @@
         "adaptations": [
           "generalize-paths"
         ],
-        "notes": "Snapshots test coverage for regression detection — universal testing utility"
+        "notes": "Snapshots test coverage for regression detection \u2014 universal testing utility"
       },
       {
         "source": "scripts/check-deps.sh",
@@ -453,6 +467,20 @@
           "generalize-paths"
         ],
         "notes": "FF version uses config-driven package directory discovery"
+      },
+      {
+        "source": "scripts/check-vulns.sh",
+        "target": "scripts/check-vulns.sh",
+        "adaptations": [
+          "generalize-paths"
+        ],
+        "notes": "npm vulnerability scanner \u2014 24h cache, session-start integrated, acknowledge mechanism"
+      },
+      {
+        "source": "scripts/query-events.sh",
+        "target": "scripts/query-events.sh",
+        "adaptations": [],
+        "notes": "JSONL event query tool \u2014 no platform-specific content"
       }
     ],
     "references": [
@@ -478,7 +506,7 @@
         "adaptations": [
           "generalize-language"
         ],
-        "notes": "Pipeline routing logic — determines which workflow to use (bug fix, feature, refactor, docs)"
+        "notes": "Pipeline routing logic \u2014 determines which workflow to use (bug fix, feature, refactor, docs)"
       },
       {
         "source": ".claude/references/model-bump-checklist.md",
@@ -486,7 +514,7 @@
         "adaptations": [
           "generalize-paths"
         ],
-        "notes": "Systematic model capability assessment — no platform-specific content"
+        "notes": "Systematic model capability assessment \u2014 no platform-specific content"
       }
     ]
   },
@@ -597,6 +625,12 @@
     "factory-internal-hooks": [
       ".claude/hooks/permission-denied.sh",
       ".claude/hooks/permission-denied.sh"
+    ],
+    "factory-only": [
+      ".claude/commands/meta-uber-review.md"
+    ],
+    "personal": [
+      ".claude/references/mc-writing-style-guide-shareable.md"
     ]
   }
 }
