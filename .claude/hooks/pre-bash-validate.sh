@@ -255,44 +255,60 @@ if echo "$COMMAND" | grep -qE "^git\s+commit"; then
     fi
 
     # ============================================
-    # TYPESCRIPT COMPILATION CHECK (BLOCKING)
+    # TYPE CHECK (BLOCKING) — config-driven
     # ============================================
-    # Run tsc --noEmit for staged .ts/.tsx files to catch type errors before commit.
-    # Only runs for directories that have a tsconfig.json.
-    STAGED_TS=$(git diff --staged --name-only 2>/dev/null | grep -E '\.(ts|tsx)$' || true)
-    if [ -n "$STAGED_TS" ] && command -v npx &>/dev/null; then
-        TSC_FAILED=false
-        TSC_ERRORS=""
+    # Runs the language-appropriate type check for staged source files.
+    # Supports: TypeScript (tsc), Go (go vet), Python (mypy), Rust (cargo check).
+    # Override with .typeCheck.command in ff.config.json, or skip with SKIP_TSC_CHECK=true.
+    TYPE_CHECK_CMD=$(ff_config ".typeCheck.command" "" 2>/dev/null)
+    PROJECT_LANG=$(ff_config ".project.language" "javascript" 2>/dev/null)
 
-        # Find directories with tsconfig.json that have staged TypeScript files
-        TRACKED_DIRS=$(ff_config_array ".project.sourceDirectories" 2>/dev/null)
-        if [ -n "$TRACKED_DIRS" ]; then
-            while IFS= read -r dir; do
-                [ -z "$dir" ] && continue
-                # Check if any staged TS files are under this directory
-                if echo "$STAGED_TS" | grep -q "^${dir}"; then
-                    # Check if there's a tsconfig.json in or above this directory
-                    TSC_DIR="$PROJECT_ROOT/$dir"
-                    while [ "$TSC_DIR" != "$PROJECT_ROOT" ] && [ "$TSC_DIR" != "/" ]; do
-                        if [ -f "$TSC_DIR/tsconfig.json" ]; then
-                            TSC_OUT=$(cd "$TSC_DIR" && npx tsc --noEmit 2>&1 || true)
-                            if echo "$TSC_OUT" | grep -q 'error TS'; then
-                                TSC_FAILED=true
-                                TSC_ERRORS="${TSC_ERRORS}\n--- $dir ---\n$(echo "$TSC_OUT" | grep 'error TS' | head -10)"
-                            fi
-                            break
-                        fi
-                        TSC_DIR="$(dirname "$TSC_DIR")"
-                    done
+    # Determine the type check command if not explicitly configured
+    if [ -z "$TYPE_CHECK_CMD" ]; then
+        case "$PROJECT_LANG" in
+            javascript|typescript)
+                # Only run tsc if there are staged .ts/.tsx files and a tsconfig.json
+                STAGED_TS=$(git diff --staged --name-only 2>/dev/null | grep -E '\.(ts|tsx)$' || true)
+                if [ -n "$STAGED_TS" ] && [ -f "$PROJECT_ROOT/tsconfig.json" ] && command -v npx &>/dev/null; then
+                    TYPE_CHECK_CMD="npx tsc --noEmit"
                 fi
-            done <<< "$TRACKED_DIRS"
+                ;;
+            go)
+                STAGED_GO=$(git diff --staged --name-only 2>/dev/null | grep -E '\.go$' || true)
+                if [ -n "$STAGED_GO" ] && command -v go &>/dev/null; then
+                    TYPE_CHECK_CMD="go vet ./..."
+                fi
+                ;;
+            python)
+                STAGED_PY=$(git diff --staged --name-only 2>/dev/null | grep -E '\.py$' || true)
+                if [ -n "$STAGED_PY" ] && command -v mypy &>/dev/null; then
+                    TYPE_CHECK_CMD="mypy ."
+                fi
+                ;;
+            rust)
+                STAGED_RS=$(git diff --staged --name-only 2>/dev/null | grep -E '\.rs$' || true)
+                if [ -n "$STAGED_RS" ] && command -v cargo &>/dev/null; then
+                    TYPE_CHECK_CMD="cargo check"
+                fi
+                ;;
+        esac
+    fi
+
+    if [ -n "$TYPE_CHECK_CMD" ]; then
+        TYPE_CHECK_OUT=$(cd "$PROJECT_ROOT" && eval "$TYPE_CHECK_CMD" 2>&1 || true)
+        TYPE_CHECK_EXIT=$?
+        # Detect failures: tsc uses 'error TS', others use non-zero exit
+        TYPE_CHECK_FAILED=false
+        if echo "$TYPE_CHECK_OUT" | grep -q 'error TS'; then
+            TYPE_CHECK_FAILED=true
+        elif [ "$TYPE_CHECK_EXIT" -ne 0 ] && [ "$PROJECT_LANG" != "javascript" ] && [ "$PROJECT_LANG" != "typescript" ]; then
+            TYPE_CHECK_FAILED=true
         fi
 
-        if [ "$TSC_FAILED" = true ]; then
+        if [ "$TYPE_CHECK_FAILED" = true ]; then
             echo "" >&2
-            echo "BLOCKED: TypeScript compilation errors in staged files" >&2
-            printf "%b" "$TSC_ERRORS" >&2
-            echo "" >&2
+            echo "BLOCKED: Type check failed ($TYPE_CHECK_CMD)" >&2
+            echo "$TYPE_CHECK_OUT" | head -15 >&2
             echo "" >&2
             echo "Fix type errors before committing." >&2
             echo "Override: SKIP_TSC_CHECK=true git commit ..." >&2

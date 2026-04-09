@@ -1,6 +1,6 @@
 ---
 description: Stage and commit with validation. Use when user wants to commit, save progress, or checkpoint work.
-allowed-tools: Bash(git:*), Bash(npm:*), Bash(npx:*), Read, Grep, Edit
+allowed-tools: Bash(git:*), Bash, Read, Grep, Edit
 ---
 
 # Commit Helper
@@ -11,18 +11,37 @@ Stage and commit changes with pre-commit validation and conventional commit mess
 
 Run these checks before staging. Stop and report if any fail.
 
-### 1. TypeScript Compilation (if applicable)
+### 1. Type Checking (if applicable)
 
-If the project uses TypeScript and modified files include `.ts` files:
+Read `ff.config.json` for the project language and run the appropriate type check:
 
 ```bash
-npx tsc --noEmit
+# Read language from config
+LANG=$(jq -r '.project.language // "javascript"' ff.config.json 2>/dev/null)
+# Read explicit typeCheck command if configured
+TYPE_CMD=$(jq -r '.typeCheck.command // empty' ff.config.json 2>/dev/null)
+
+# Use explicit command if set, otherwise dispatch by language
+if [ -n "$TYPE_CMD" ]; then
+    eval "$TYPE_CMD"
+elif [ "$LANG" = "typescript" ] || [ "$LANG" = "javascript" ]; then
+    [ -f tsconfig.json ] && npx tsc --noEmit
+elif [ "$LANG" = "go" ]; then
+    go vet ./...
+elif [ "$LANG" = "python" ]; then
+    command -v mypy &>/dev/null && mypy . || true
+elif [ "$LANG" = "rust" ]; then
+    cargo check
+fi
 ```
 
 ### 2. Test Suite
 
+Read the test command from `ff.config.json` (`.testing.command`):
+
 ```bash
-npm test --bail
+TEST_CMD=$(jq -r '.testing.command // "npm test"' ff.config.json 2>/dev/null)
+eval "$TEST_CMD"
 ```
 
 ### 3. ABOUTME Comments

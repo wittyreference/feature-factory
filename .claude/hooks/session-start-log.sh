@@ -217,27 +217,27 @@ elif ! command -v direnv >/dev/null 2>&1 && [ -f "$PROJECT_ROOT/.envrc" ]; then
 fi
 
 # 6. Codebase smoke test (syntax + deps, <200ms)
+# Language-aware: only run checks relevant to the project's language.
 SMOKE_FAILURES=""
+PROJECT_LANG=$(ff_config ".project.language" "javascript" 2>/dev/null)
 
-# 7a. node_modules existence
-if [ ! -d "$PROJECT_ROOT/node_modules" ]; then
-    SMOKE_FAILURES="${SMOKE_FAILURES} node_modules(missing)"
-fi
-
-# 7b. package.json valid JSON
-if [ -f "$PROJECT_ROOT/package.json" ]; then
-    if ! node -e "JSON.parse(require('fs').readFileSync('$PROJECT_ROOT/package.json','utf8'))" 2>/dev/null; then
-        SMOKE_FAILURES="${SMOKE_FAILURES} package.json(invalid)"
-    fi
-fi
-
-# 7c. Syntax check source files (config-driven directories)
-SOURCE_DIRS=$(ff_config_array ".project.sourceDirectories" 2>/dev/null)
-if [ -n "$SOURCE_DIRS" ]; then
-    while IFS= read -r dir; do
-        [ -z "$dir" ] && continue
-        if [ -d "$PROJECT_ROOT/$dir" ]; then
-            SYNTAX_ERRORS=$(find "$PROJECT_ROOT/$dir" -name "*.js" -not -path "*/node_modules/*" -exec node -e "
+case "$PROJECT_LANG" in
+    javascript|typescript)
+        # Node.js: check node_modules, package.json, and JS syntax
+        if [ ! -d "$PROJECT_ROOT/node_modules" ]; then
+            SMOKE_FAILURES="${SMOKE_FAILURES} node_modules(missing)"
+        fi
+        if [ -f "$PROJECT_ROOT/package.json" ]; then
+            if ! node -e "JSON.parse(require('fs').readFileSync('$PROJECT_ROOT/package.json','utf8'))" 2>/dev/null; then
+                SMOKE_FAILURES="${SMOKE_FAILURES} package.json(invalid)"
+            fi
+        fi
+        SOURCE_DIRS=$(ff_config_array ".project.sourceDirectories" 2>/dev/null)
+        if [ -n "$SOURCE_DIRS" ]; then
+            while IFS= read -r dir; do
+                [ -z "$dir" ] && continue
+                if [ -d "$PROJECT_ROOT/$dir" ]; then
+                    SYNTAX_ERRORS=$(find "$PROJECT_ROOT/$dir" -name "*.js" -not -path "*/node_modules/*" -exec node -e "
 const fs = require('fs');
 const vm = require('vm');
 const errors = [];
@@ -247,17 +247,41 @@ for (const f of process.argv.slice(1)) {
 }
 if (errors.length) { console.log(errors.length); console.error(errors.join('\n')); process.exit(1); }
 " {} + 2>&1 || true)
-            if [ -n "$SYNTAX_ERRORS" ]; then
-                BAD_COUNT=$(echo "$SYNTAX_ERRORS" | head -1)
-                SMOKE_FAILURES="${SMOKE_FAILURES} ${dir}(${BAD_COUNT} syntax errors)"
+                    if [ -n "$SYNTAX_ERRORS" ]; then
+                        BAD_COUNT=$(echo "$SYNTAX_ERRORS" | head -1)
+                        SMOKE_FAILURES="${SMOKE_FAILURES} ${dir}(${BAD_COUNT} syntax errors)"
+                    fi
+                fi
+            done <<< "$SOURCE_DIRS"
+        fi
+        ;;
+    go)
+        if [ -f "$PROJECT_ROOT/go.mod" ]; then
+            if ! command -v go &>/dev/null; then
+                SMOKE_FAILURES="${SMOKE_FAILURES} go(not installed)"
             fi
         fi
-    done <<< "$SOURCE_DIRS"
-fi
+        ;;
+    python)
+        if [ -f "$PROJECT_ROOT/requirements.txt" ] || [ -f "$PROJECT_ROOT/pyproject.toml" ] || [ -f "$PROJECT_ROOT/setup.py" ]; then
+            if ! command -v python3 &>/dev/null && ! command -v python &>/dev/null; then
+                SMOKE_FAILURES="${SMOKE_FAILURES} python(not installed)"
+            fi
+        fi
+        ;;
+    rust)
+        if [ -f "$PROJECT_ROOT/Cargo.toml" ]; then
+            if ! command -v cargo &>/dev/null; then
+                SMOKE_FAILURES="${SMOKE_FAILURES} cargo(not installed)"
+            fi
+        fi
+        ;;
+esac
 
 if [ -n "$SMOKE_FAILURES" ]; then
+    TEST_CMD=$(ff_config ".testing.command" "npm test" 2>/dev/null)
     echo "SMOKE TEST FAILED:${SMOKE_FAILURES}" >&2
-    echo "  Fix these before starting work. Run 'npm test' for details." >&2
+    echo "  Fix these before starting work. Run '$TEST_CMD' for details." >&2
 fi
 
 echo "Run /preflight for full environment validation." >&2

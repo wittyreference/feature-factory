@@ -2,21 +2,34 @@
 description: Check for outdated dependencies across all packages. Use when checking deps, bumping versions, or managing package freshness.
 ---
 
-Check all package.json files for outdated dependencies and apply safe bumps.
+Check for outdated dependencies and apply safe bumps. Language-aware — reads `ff.config.json` for the project's package manager.
 
 ## Check
 
-Run `./scripts/check-deps.sh --force` to bypass cache and check now. Report the output to the user.
+First, read `ff.config.json` to determine the project language:
 
-Then read the digest file at `.claude/.update-cache/deps-digest.md` and present the findings.
+```bash
+LANG=$(jq -r '.project.language // "javascript"' ff.config.json 2>/dev/null)
+```
+
+If `./scripts/check-deps.sh` exists, run it with `--force`. Otherwise, use language-specific commands:
+
+| Language | List Outdated | Safe Bump | Lock File |
+|----------|--------------|-----------|-----------|
+| JavaScript/TypeScript | `npm outdated` | `npm update` | `package-lock.json` |
+| Go | `go list -m -u all` | `go get -u ./...` | `go.sum` |
+| Python | `pip list --outdated` | `pip install --upgrade <pkg>` | `requirements.txt` |
+| Rust | `cargo outdated` (if installed) | `cargo update` | `Cargo.lock` |
+
+Then read `.claude/.update-cache/deps-digest.md` if it exists and present findings.
 
 ## Apply Safe Bumps
 
-If the user wants to apply safe bumps (within declared semver range):
+If the user wants to apply safe bumps:
 
-1. Run `npm update` in each directory that has outdated packages
-2. For TypeScript packages, verify compilation: `npx tsc --noEmit`
-3. Commit all lock file changes with a descriptive message listing what was bumped
+1. Run the appropriate update command for the project language (see table above)
+2. Run the type check if configured: `jq -r '.typeCheck.command // empty' ff.config.json`
+3. Commit lock file changes with a descriptive message listing what was bumped
 
 ## Major Upgrades
 
@@ -25,13 +38,6 @@ For packages with major version jumps, present them separately with a recommenda
 - **Review changelog** — link to the package's changelog/release notes
 - **Check breaking changes** — note known migration concerns
 - **Defer or adopt** — recommend based on risk vs. benefit
-
-Known major upgrade concerns:
-- `jest` 29→30: Test runner migration, possible config changes
-- `typescript` 5→6: Compiler changes, check `tsconfig.json` compat
-- `zod` 3→4: Schema API changes
-- `dotenv` 16→17: Requires `quiet: true` to suppress stdout logging
-- `@anthropic-ai/sdk` 0.x: Pre-1.0, any minor bump can break
 
 ## Arguments
 

@@ -14,6 +14,9 @@
     "command": "npm run lint",
     "fixCommand": "npm run lint:fix"
   },
+  "typeCheck": {
+    "command": null
+  },
   "deployment": {
     "command": null,
     "preChecks": ["test", "lint", "coverage"]

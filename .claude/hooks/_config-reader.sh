@@ -41,7 +41,7 @@ ff_config_array() {
 # Usage: while IFS=$'\t' read -r pattern name exclude; do ... done < <(ff_credential_patterns)
 ff_credential_patterns() {
     if [ -f "$FF_CONFIG" ] && command -v jq &>/dev/null; then
-        jq -r '.credentialPatterns[]? | [.pattern, .name, (.excludePattern // "")] | @tsv' "$FF_CONFIG" 2>/dev/null
+        jq -r '.credentialPatterns[]? | [.pattern, .name, (.excludePattern // "")] | join("\t")' "$FF_CONFIG" 2>/dev/null
     fi
 }
 
@@ -49,7 +49,7 @@ ff_credential_patterns() {
 # Usage: while IFS=$'\t' read -r source doc; do ... done < <(ff_doc_mappings)
 ff_doc_mappings() {
     if [ -f "$FF_CONFIG" ] && command -v jq &>/dev/null; then
-        jq -r '.docMappings | to_entries[]? | [.key, .value] | @tsv' "$FF_CONFIG" 2>/dev/null
+        jq -r '.docMappings | to_entries[]? | [.key, .value] | join("\t")' "$FF_CONFIG" 2>/dev/null
     fi
 }
 
@@ -57,6 +57,8 @@ ff_doc_mappings() {
 # Usage: if ff_is_tracked_file "src/main.js"; then ...
 ff_is_tracked_file() {
     local filepath="$1"
+    # Normalize: strip leading ./ for consistent prefix matching
+    filepath="${filepath#./}"
     local tracked_dirs
     tracked_dirs=$(ff_config_array ".trackedDirectories")
     if [ -z "$tracked_dirs" ]; then
@@ -64,6 +66,11 @@ ff_is_tracked_file() {
         return 0
     fi
     while IFS= read -r dir; do
+        # Normalize: strip leading ./ and treat empty/. as root (match all)
+        dir="${dir#./}"
+        if [ -z "$dir" ] || [ "$dir" = "." ]; then
+            return 0
+        fi
         if [[ "$filepath" == "$dir"* ]]; then
             return 0
         fi
