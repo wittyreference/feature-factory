@@ -63,6 +63,12 @@ Analyze logs ──► /architect (diagnose) ──► /test-gen (regression) �
 
 All workflows that produce code changes should end with `/commit` to stage and commit with validation. If the work is ready for remote, follow with `/push`. These are optional — the user may prefer to commit/push manually.
 
+| Command | When to use |
+|---------|-------------|
+| `/commit` | Save progress — checkpoint work, may continue in this session |
+| `/push` | Share work — create PR, may want review before merge |
+| `/ship` | Land it — commit through merge, exit worktree, done |
+
 ## Context Handoff Between Phases
 
 When moving between phases, carry forward key context using XML tags:

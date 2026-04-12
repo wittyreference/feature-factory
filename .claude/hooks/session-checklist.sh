@@ -103,6 +103,31 @@ if [ "$CLAUDE_META_MODE" = "true" ] && [ -n "${CLAUDE_LEARNING_DIR:-}" ] && [ -d
 fi
 
 # ============================================
+# --- 2b. Worktree shipping status ---
+_SC_GIT_DIR=$(git -C "$PROJECT_ROOT" rev-parse --git-dir 2>/dev/null || echo "")
+if echo "$_SC_GIT_DIR" | grep -q '/worktrees/'; then
+    _SC_BRANCH=$(git -C "$PROJECT_ROOT" branch --show-current 2>/dev/null)
+    if [[ -n "$_SC_BRANCH" ]] && [[ "$_SC_BRANCH" != "main" ]]; then
+        _SC_AHEAD=$(git -C "$PROJECT_ROOT" rev-list --count "$(git -C "$PROJECT_ROOT" merge-base HEAD main 2>/dev/null || echo HEAD)..HEAD" 2>/dev/null || echo "0")
+        if [[ "$_SC_AHEAD" != "0" ]]; then
+            if command -v gh &>/dev/null; then
+                _SC_PR_JSON=$(timeout 5 gh pr view -H "$_SC_BRANCH" --json state,number 2>/dev/null || echo "")
+                if [[ -z "$_SC_PR_JSON" ]]; then
+                    ITEMS+=("[MANUAL] WORKTREE: $_SC_AHEAD commit(s) on '$_SC_BRANCH' with no PR — run /ship or /push")
+                else
+                    _SC_PR_STATE=$(echo "$_SC_PR_JSON" | jq -r '.state // "UNKNOWN"')
+                    _SC_PR_NUM=$(echo "$_SC_PR_JSON" | jq -r '.number // "?"')
+                    if [[ "$_SC_PR_STATE" == "OPEN" ]]; then
+                        ITEMS+=("[INFO] WORKTREE: PR #$_SC_PR_NUM open for '$_SC_BRANCH' ($_SC_AHEAD commits)")
+                    fi
+                fi
+            else
+                ITEMS+=("[MANUAL] WORKTREE: $_SC_AHEAD commit(s) on '$_SC_BRANCH' — consider /ship or /push before ending session")
+            fi
+        fi
+    fi
+fi
+
 # Output checklist (only if there are items)
 # ============================================
 if [[ ${#ITEMS[@]} -gt 0 ]]; then

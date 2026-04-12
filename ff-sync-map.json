@@ -163,6 +163,12 @@
           "use-config-reader"
         ],
         "notes": "JSONL event emitter. Hooks that emit events are already shipped \u2014 this helper must ship too."
+      },
+      {
+        "source": ".claude/hooks/index-plans.sh",
+        "target": ".claude/hooks/index-plans.sh",
+        "adaptations": [],
+        "notes": "Plan index generator - no platform-specific content"
       }
     ],
     "commands": [
@@ -322,6 +328,15 @@
           "generalize-paths"
         ],
         "notes": "Full lifecycle: commit, PR, CI, merge, exit worktree"
+      },
+      {
+        "source": ".claude/commands/knowledge-miss.md",
+        "target": ".claude/commands/knowledge-miss.md",
+        "adaptations": [
+          "strip-twilio-services",
+          "generalize-language"
+        ],
+        "notes": "Knowledge miss event logger for RAG adoption data collection"
       }
     ],
     "skills": [
@@ -415,6 +430,12 @@
           "generalize-language"
         ],
         "notes": "Workflow failure diagnosis \u2014 stalled agents, hook blocks, session state. Twilio MCP refs stripped."
+      },
+      {
+        "source": ".claude/skills/adversarial-review.md",
+        "target": ".claude/skills/adversarial-review.md",
+        "adaptations": [],
+        "notes": "Domain-agnostic adversarial review pattern for technology adoption decisions"
       }
     ],
     "workflows": [

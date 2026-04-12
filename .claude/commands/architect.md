@@ -283,6 +283,42 @@ Key context for next phase:
 
 Before starting a design review, optimize your context:
 
+### Step 0: Prior Knowledge Check (MANDATORY — do this FIRST)
+
+Before designing anything, check whether this problem has been addressed in prior work. This prevents re-discovering known patterns and re-planning already-designed approaches.
+
+1. **Search the plan index**: Extract 2-3 keywords from the user's request. Search `~/.claude/plans/INDEX.md` for matches. If prior plans exist for this topic, read them and note what was decided, what alternatives were rejected, and why.
+   ```bash
+   grep -i "keyword1\|keyword2\|keyword3" ~/.claude/plans/INDEX.md | head -5
+   ```
+
+2. **Search design decisions**: Check `DESIGN_DECISIONS.md` for relevant decisions.
+   ```bash
+   grep -i "keyword" DESIGN_DECISIONS.md | head -5
+   ```
+
+3. **Search known issues**: Check project documentation for known pitfalls in this domain. If `.claude/references/operational-gotchas.md` exists, search it:
+   ```bash
+   grep -i "keyword" .claude/references/operational-gotchas.md 2>/dev/null | head -5
+   ```
+
+4. **Search documentation**: Check project docs and CLAUDE.md files for concept-to-file mappings related to this topic.
+
+5. **Report what you found**: Before proceeding with the design, state:
+   - Prior plans found (or "no prior plans for this topic")
+   - Relevant design decisions (or "no relevant decisions")
+   - Known issues (or "no known issues for this domain")
+   
+   If prior plans exist, explicitly state how this design builds on or diverges from them. Do NOT silently re-derive conclusions that were already reached.
+
+6. **Log knowledge misses**: If during the design you discover you needed context that wasn't in any searchable source, emit a knowledge miss event:
+   ```bash
+   source .claude/hooks/_emit-event.sh
+   EMIT_SESSION_ID="${CLAUDE_SESSION_ID:-unknown}"
+   emit_event "knowledge_miss" "$(jq -nc --arg desc 'DESCRIPTION' --arg cat 'CATEGORY' --arg res 'RESOLUTION' '{description: $desc, category: $cat, resolution: $res, phase: "architect"}')"
+   ```
+   Categories: `semantic_gap`, `not_in_memory`, `cross_repo`, `stale`, `plan_archaeology`
+
 ### Load Relevant Context
 
 1. **Load domain CLAUDE.md**: If working on a specific domain, load its CLAUDE.md
@@ -299,6 +335,24 @@ Before starting a design review, optimize your context:
 ### After Review
 
 Run `/context summarize` if the session is long, to compress progress before handoff.
+
+---
+
+## Observability: Emit Phase Outcome
+
+After completing the architecture review, emit a `task_outcome` event to track pipeline effectiveness. Run this bash command with appropriate values:
+
+```bash
+source .claude/hooks/_emit-event.sh
+emit_event "task_outcome" "{\"task_id\":\"TASK_ID\",\"phase\":\"architect\",\"result\":\"RESULT\",\"retries\":0,\"human_intervention\":false,\"duration_sec\":DURATION}"
+```
+
+- **TASK_ID**: A short slug for the feature (e.g., `auth-flow`, `data-pipeline`). Use the domain + feature name.
+- **RESULT**: One of `success` (produced Architecture Review with PROCEED), `partial` (produced review with MODIFY/REDESIGN), `failure` (could not produce a review).
+- **DURATION**: Estimated seconds spent on this phase (round to nearest 30s).
+- **human_intervention**: Set to `true` if you had to ask the user clarifying questions that changed the design direction.
+
+Do NOT skip this step. It feeds the quality dashboard and eval regression system.
 
 ---
 

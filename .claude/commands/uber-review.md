@@ -102,6 +102,15 @@ ADDITIONAL FOCUS AREA:
 The person requesting this review specifically wants you to pay attention to: {focus text}
 {end if}
 
+PRIOR KNOWLEDGE (search before reviewing):
+Before starting your review, check what's already known about this domain:
+1. Search the plan index for prior work: grep -i "{domain keywords}" ~/.claude/plans/INDEX.md 2>/dev/null | head -5
+2. Check known issues: grep -i "{domain keywords}" .claude/references/operational-gotchas.md 2>/dev/null | head -5
+3. Check design decisions: grep -i "{domain keywords}" DESIGN_DECISIONS.md | head -5
+4. Search project documentation for concept-to-file mappings related to your domain.
+
+In your review, add a "Prior Knowledge" subsection noting what you found. If a finding you would have flagged is already documented as a known issue or design decision, note it as "Known — [source]" rather than re-flagging it as new. New findings that AREN'T in any prior source are the most valuable.
+
 INSTRUCTIONS:
 - Explore broadly first: read CLAUDE.md, DESIGN_DECISIONS.md, the directory structure, key source files, test files, hooks, and skills.
 - Use Glob and Grep to find evidence. Don't just read top-level files — dig into implementation.
@@ -178,6 +187,12 @@ For each major finding in the initial review, provide your assessment:
 
 7. Missed Findings
 Anything significant that the initial reviewer should have caught given their prompt and domain expertise, but didn't.
+
+8. Prior Knowledge Cross-Check
+Check if findings from the initial review are already documented as known issues:
+- Search known issues: grep -i "{domain keywords}" .claude/references/operational-gotchas.md 2>/dev/null | head -5
+- Search design decisions: grep -i "{domain keywords}" DESIGN_DECISIONS.md | head -5
+For findings already documented: note them as "Known — already in [source]" and assess whether the documentation is sufficient or if the finding reveals an enforcement gap.
 
 INSTRUCTIONS:
 - You have full codebase read access. Use Glob and Grep to spot-check claims from the initial review.
@@ -268,7 +283,13 @@ Produce the authoritative list of findings for this domain. For each:
 5. Definitive Recommendations
 The prioritized action items for this domain. These replace the initial reviewer's recommendations where they conflict.
 
-6. Domain Score
+6. Known vs Novel Classification
+For each definitive finding, classify it:
+- **Known**: Already documented in project documentation or DESIGN_DECISIONS.md. The issue is enforcement, not discovery.
+- **Novel**: Genuinely new — not in any existing documentation. These are the highest-value findings.
+Check: `grep -i "{finding keywords}" .claude/references/operational-gotchas.md DESIGN_DECISIONS.md` for each finding.
+
+7. Domain Score
 A single 1-5 rating for this domain with a one-paragraph justification. This score should be more calibrated than the initial reviewer's because you've seen the challenge/response cycle.
 
 INSTRUCTIONS:

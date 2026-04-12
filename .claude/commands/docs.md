@@ -15,6 +15,21 @@ You are the Technical Writer for this project. Your role is to create and mainta
 4. **Code Comments**: Ensure ABOUTME comments and inline documentation
 5. **Usage Examples**: Create practical examples for each feature
 
+## Prior Knowledge Check (MANDATORY — do this FIRST)
+
+Before writing or updating documentation:
+
+1. **Read existing domain docs**: Load the relevant domain CLAUDE.md to understand what's already documented. Don't duplicate — extend.
+
+2. **Check pending documentation suggestions**: The doc flywheel generates suggestions in the pending-actions file. Check if there are outstanding doc tasks:
+   ```bash
+   grep -i "documentation\|CLAUDE.md\|doc" .meta/pending-actions.md 2>/dev/null || grep -i "documentation\|CLAUDE.md\|doc" .claude/pending-actions.md 2>/dev/null
+   ```
+
+3. **Check doc coverage**: Review project documentation structure — does it already cover the files you're documenting? If not, extend it.
+
+4. **Check known issues for this domain**: Known issues should be documented in the domain CLAUDE.md. Verify they're there.
+
 ## Documentation Types
 
 ### 1. CLAUDE.md Hierarchy

@@ -81,7 +81,7 @@ fi
 PACKAGE_DIRS=()
 while IFS= read -r pkg; do
     PACKAGE_DIRS+=("$(dirname "$pkg")")
-done < <(find "$PROJECT_ROOT" -name package.json -not -path "*/node_modules/*" | sort)
+done < <(find "$PROJECT_ROOT" -name package.json -not -path "*/node_modules/*" -not -path "*/.meta/*" | sort)
 
 log "Checking ${#PACKAGE_DIRS[@]} package directories..."
 

@@ -18,17 +18,30 @@ You are the Senior Developer and Code Reviewer for this project. Your role is to
 
 ## Review Process
 
-### Step 1: Gather Context
+### Step 1: Prior Knowledge Check
+
+Before reviewing, check for known issues in the areas being changed. This prevents re-flagging known issues and ensures review findings build on existing knowledge.
+
+1. **Identify domains touched**: From the diff, determine which areas are affected.
+2. **Search known issues**: Check project documentation and domain CLAUDE.md files for gotchas in the changed areas. Known pitfalls in changed code should be verified as addressed, not re-reported as findings.
+3. **Search prior review findings**: Check the plan index for recent review-related plans:
+   ```bash
+   grep -i "review\|audit\|security" ~/.claude/plans/INDEX.md 2>/dev/null | head -5
+   ```
+4. **Check design decisions**: If the changes touch architecture, verify they align with `DESIGN_DECISIONS.md`.
+5. **Note known context**: In your review output, add a "Prior Knowledge" line in the Summary section noting what prior findings or decisions informed your review. If you found nothing relevant, state "No prior review findings for this area."
+
+### Step 2: Gather Context
 
 - View the changes (git diff)
 - Check recent commits
 - Run tests
 
-### Step 2: Review Against Checklists
+### Step 3: Review Against Checklists
 
 Complete ALL checklists below.
 
-### Step 3: Render Verdict
+### Step 4: Render Verdict
 
 Provide clear APPROVED, NEEDS_CHANGES, or REJECTED decision.
 
@@ -228,6 +241,39 @@ Issues to address:
 
 After fixes, re-run: `/review [files]`
 ```
+
+---
+
+## Observability: Emit Phase Outcome
+
+After completing the review, emit a `task_outcome` event to track pipeline effectiveness. Run this bash command with appropriate values:
+
+```bash
+source .claude/hooks/_emit-event.sh
+emit_event "task_outcome" "{\"task_id\":\"TASK_ID\",\"phase\":\"review\",\"result\":\"RESULT\",\"findings_blocking\":BLOCKING,\"findings_major\":MAJOR,\"findings_minor\":MINOR,\"duration_sec\":DURATION}"
+```
+
+- **TASK_ID**: Match the task_id from prior phases, or derive from the files being reviewed (e.g., `feature-name`).
+- **RESULT**: One of `approved` (APPROVED verdict), `changes_requested` (NEEDS_CHANGES), `rejected` (REJECTED).
+- **BLOCKING/MAJOR/MINOR**: Count of findings at each severity level.
+- **DURATION**: Estimated seconds spent on this phase.
+
+Do NOT skip this step. It feeds the quality dashboard and eval regression system.
+
+---
+
+## Review Feedback Loop
+
+After completing the review, close the knowledge loop:
+
+1. **Log knowledge misses**: If during the review you needed context that wasn't in any searchable source (e.g., "I didn't know this was already a known issue" or "I couldn't find the prior decision about this pattern"), emit a knowledge miss event:
+   ```bash
+   source .claude/hooks/_emit-event.sh
+   EMIT_SESSION_ID="${CLAUDE_SESSION_ID:-unknown}"
+   emit_event "knowledge_miss" "$(jq -nc --arg desc 'DESCRIPTION' --arg cat 'CATEGORY' --arg res 'RESOLUTION' '{description: $desc, category: $cat, resolution: $res, phase: "review"}')"
+   ```
+
+2. **Flag gotcha candidates**: If a BLOCKING or MAJOR finding reveals a pattern that could recur in other code, note it as a gotcha candidate in the review output. Format: `**Gotcha candidate**: [description] — should be added to project documentation`
 
 ---
 

@@ -140,3 +140,5 @@ Total: <count> commits
 <user_request>
 $ARGUMENTS
 </user_request>
+
+In a worktree? Use /ship next time to handle commit -> PR -> merge -> worktree exit in one step.

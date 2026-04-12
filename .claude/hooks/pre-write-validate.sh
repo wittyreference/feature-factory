@@ -22,6 +22,7 @@ fi
 if [ -n "$HOOK_INPUT" ] && command -v jq &> /dev/null; then
     FILE_PATH="$(echo "$HOOK_INPUT" | jq -r '.tool_input.file_path // empty' 2>/dev/null)"
     CONTENT="$(echo "$HOOK_INPUT" | jq -r '.tool_input.content // .tool_input.new_string // empty' 2>/dev/null)"
+    OLD_STRING="$(echo "$HOOK_INPUT" | jq -r '.tool_input.old_string // empty' 2>/dev/null)"
 fi
 
 # Exit early if no content to validate

@@ -34,6 +34,7 @@ Commands:
   tests                Test run events
   types                List all event types seen
   vulns                Vulnerability scan events
+  knowledge            Knowledge miss events (RAG decision data)
   today                Events from today only
   raw                  Dump raw JSONL
 
@@ -125,6 +126,34 @@ case "$COMMAND" in
         echo "Vulnerability scan events:"
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━"
         jq -s '[.[] | select(.event_type == "vuln_scan")] | if length == 0 then "No scans recorded" else .[] | "\(.timestamp) total=\(.total) critical=\(.critical) high=\(.high) new=\(.new) resolved=\(.resolved)" end' "$EVENTS_FILE" | tr -d '"'
+        ;;
+
+    knowledge)
+        echo "Knowledge miss events:"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        MISSES=$(jq -s '[.[] | select(.event_type == "knowledge_miss")]' "$EVENTS_FILE")
+        COUNT=$(echo "$MISSES" | jq 'length')
+        if [ "$COUNT" -eq 0 ]; then
+            echo "No knowledge misses recorded yet."
+            echo "Use /knowledge-miss to log when Claude lacks expected context."
+        else
+            echo "Total: $COUNT misses"
+            echo ""
+            echo "By category:"
+            echo "$MISSES" | jq -r 'group_by(.category) | map({cat: .[0].category, count: length}) | sort_by(-.count) | .[] | "  \(.cat): \(.count)"'
+            echo ""
+            echo "Last 5:"
+            echo "$MISSES" | jq -r '.[-5:] | .[] | "  \(.timestamp) [\(.category)] \(.description)"'
+
+            # 7-day window stats for RAG decision threshold
+            WEEK_AGO=$(date -u -v-7d +%Y-%m-%dT 2>/dev/null || date -u -d '7 days ago' +%Y-%m-%dT 2>/dev/null || echo "")
+            if [ -n "$WEEK_AGO" ]; then
+                WEEK_COUNT=$(echo "$MISSES" | jq --arg since "$WEEK_AGO" '[.[] | select(.timestamp >= $since)] | length')
+                WEEK_SEMANTIC=$(echo "$MISSES" | jq --arg since "$WEEK_AGO" '[.[] | select(.timestamp >= $since and .category == "semantic_gap")] | length')
+                echo ""
+                echo "7-day window: $WEEK_COUNT misses ($WEEK_SEMANTIC semantic_gap)"
+            fi
+        fi
         ;;
 
     *)

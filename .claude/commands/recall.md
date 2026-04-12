@@ -39,8 +39,15 @@ Search these sources using grep (case-insensitive, with `-C 3` context):
    - Architectural choices with context, rationale, and alternatives
    - Entries follow `## Decision N: Title` format
 
-4. **Operational gotchas** — `.claude/references/operational-gotchas.md`
+4. **Plan index** — `~/.claude/plans/INDEX.md`
+   - Auto-generated index of all plan files with titles, dates, and summaries
+   - Enables finding past decisions without knowing opaque plan filenames
+
+5. **Operational gotchas** — `.claude/references/operational-gotchas.md`
    - Cross-cutting issues and workarounds
+
+6. **Doc-navigator keyword index** — `.claude/references/doc-navigator.md` (Keyword Index section)
+   - Concept-to-file mapping for cross-cutting topics
 
 5. **Domain CLAUDE.md files** — Search all `**/CLAUDE.md` files in the project
    - Domain-specific patterns, gotchas, and conventions

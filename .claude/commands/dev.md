@@ -31,6 +31,23 @@ STOP: Tests must exist and FAIL before implementation.
 Recommendation: Run `/test-gen [feature]` first to generate failing tests.
 ```
 
+### Prior Knowledge Check (MANDATORY — before implementing)
+
+After verifying tests exist and fail, check domain knowledge before writing implementation code:
+
+1. **Read domain docs**: Load the relevant domain CLAUDE.md and read its Gotchas section. Known platform behaviors must be handled in implementation, not discovered during testing.
+
+2. **Check known issues**: Search project documentation for domain-specific pitfalls.
+
+3. **Read existing code in the domain**: Check what patterns are already established. Read 1-2 existing implementations to match error handling patterns, response formats, and helper usage.
+
+4. **Log knowledge misses**: If during implementation you discover you needed context that wasn't in any searchable source, emit a knowledge miss event:
+   ```bash
+   source .claude/hooks/_emit-event.sh
+   EMIT_SESSION_ID="${CLAUDE_SESSION_ID:-unknown}"
+   emit_event "knowledge_miss" "$(jq -nc --arg desc 'DESCRIPTION' --arg cat 'CATEGORY' --arg res 'RESOLUTION' '{description: $desc, category: $cat, resolution: $res, phase: "dev"}')"
+   ```
+
 ### TDD Green Phase Cycle
 
 ```
@@ -117,6 +134,26 @@ Files to review:
 - [source file]
 - [test file]
 ```
+
+## Observability: Emit Phase Outcome
+
+After implementation is complete (tests passing, committed), emit a `task_outcome` event to track pipeline effectiveness. Run this bash command with appropriate values:
+
+```bash
+source .claude/hooks/_emit-event.sh
+emit_event "task_outcome" "{\"task_id\":\"TASK_ID\",\"phase\":\"dev\",\"result\":\"RESULT\",\"retries\":RETRIES,\"human_intervention\":false,\"duration_sec\":DURATION,\"tests_passed\":PASSED,\"tests_total\":TOTAL}"
+```
+
+- **TASK_ID**: Match the task_id from prior phases (e.g., `feature-name`).
+- **RESULT**: One of `success` (all tests passing, committed), `partial` (some tests passing), `failure` (could not make tests pass).
+- **RETRIES**: Number of times you had to reattempt implementation after test failures (0 = first try success).
+- **PASSED/TOTAL**: Test results.
+- **DURATION**: Estimated seconds spent on this phase.
+- **human_intervention**: Set to `true` if the user corrected your approach or provided guidance.
+
+Do NOT skip this step. It feeds the quality dashboard and eval regression system.
+
+---
 
 ## Current Task
 

@@ -318,6 +318,56 @@ if [ -f "$DECISIONS_FILE" ]; then
     fi
 fi
 
+
+# Branch-aware plan matching: surface relevant plans based on current branch name
+PLAN_INDEX="$HOME/.claude/plans/INDEX.md"
+if [ -f "$PLAN_INDEX" ]; then
+    BRANCH_NAME=$(git -C "$PROJECT_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+    if [ -n "$BRANCH_NAME" ] && [ "$BRANCH_NAME" != "main" ] && [ "$BRANCH_NAME" != "HEAD" ]; then
+        # Extract keywords from branch name (split on -, filter short/stop words)
+        BRANCH_KEYWORDS=$(echo "$BRANCH_NAME" | tr '-' '\n' | tr '_' '\n' | awk 'length > 3 && !/^(worktree|feat|fix|chore|docs|test|main|HEAD)$/' | head -3)
+        if [ -n "$BRANCH_KEYWORDS" ]; then
+            PLAN_MATCHES=""
+            for kw in $BRANCH_KEYWORDS; do
+                MATCH=$(grep -i "$kw" "$PLAN_INDEX" | head -1 | awk -F'|' '{gsub(/^ +| +$/, "", $3); print $3}')
+                if [ -n "$MATCH" ] && [ -z "$(echo "$PLAN_MATCHES" | grep -F "$MATCH")" ]; then
+                    PLAN_MATCHES="${PLAN_MATCHES}${MATCH}, "
+                fi
+            done
+            PLAN_MATCHES="${PLAN_MATCHES%, }"
+            if [ -n "$PLAN_MATCHES" ]; then
+                CONTEXT_LINES="${CONTEXT_LINES}Related plans: $PLAN_MATCHES\n"
+            fi
+        fi
+    fi
+fi
+
+# Recent memory file updates: last 3 modified memory files
+MEMORY_PROJECT_DIR="$HOME/.claude/projects/$(echo "$PROJECT_ROOT" | sed 's|/|-|g')/memory"
+if [ -d "$MEMORY_PROJECT_DIR" ]; then
+    RECENT_MEMORY=$(ls -t "$MEMORY_PROJECT_DIR"/*.md 2>/dev/null | grep -v 'MEMORY.md' | head -3 | xargs -I{} basename {} .md | tr '\n' '|' | sed 's/|$//;s/|/, /g')
+    if [ -n "$RECENT_MEMORY" ]; then
+        CONTEXT_LINES="${CONTEXT_LINES}Recent memory: $RECENT_MEMORY\n"
+    fi
+fi
+
+# Knowledge miss summary: count from last 7 days
+if [ -d "$PROJECT_ROOT/.meta" ]; then
+    KM_EVENTS="$PROJECT_ROOT/.meta/logs/events.jsonl"
+else
+    KM_EVENTS="$PROJECT_ROOT/.claude/logs/events.jsonl"
+fi
+if [ -f "$KM_EVENTS" ] && command -v jq &>/dev/null; then
+    WEEK_AGO=$(date -u -v-7d +%Y-%m-%dT 2>/dev/null || date -u -d '7 days ago' +%Y-%m-%dT 2>/dev/null || echo "")
+    if [ -n "$WEEK_AGO" ]; then
+        KM_COUNT=$(jq --arg since "$WEEK_AGO" '[.[] | select(.event_type == "knowledge_miss" and .timestamp >= $since)] | length' "$KM_EVENTS" 2>/dev/null) || KM_COUNT=0
+        if [ "$KM_COUNT" -gt 0 ]; then
+            KM_TOP=$(jq -s --arg since "$WEEK_AGO" '[.[] | select(.event_type == "knowledge_miss" and .timestamp >= $since)] | group_by(.category) | sort_by(-length) | .[0][0].category' "$KM_EVENTS" 2>/dev/null | tr -d '"') || KM_TOP="unknown"
+            CONTEXT_LINES="${CONTEXT_LINES}Knowledge misses (7d): $KM_COUNT (top: $KM_TOP)\n"
+        fi
+    fi
+fi
+
 # Last compaction summary: filename + age
 LATEST_COMPACTION=$(ls -t "$COMPACTION_DIR"/compaction-summary-*.md 2>/dev/null | head -1)
 if [ -n "$LATEST_COMPACTION" ]; then
